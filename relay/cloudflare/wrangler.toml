@@ -1,0 +1,47 @@
+name = "workslocal-relay"
+main = "src/index.ts"
+compatibility_date = "2026-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ─── Durable Objects ────────────────────────────────────
+[durable_objects]
+bindings = [
+  { name = "TUNNEL", class_name = "TunnelDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TunnelDO"]
+
+# ─── D1 Database ────────────────────────────────────────
+[[d1_databases]]
+binding = "DB"
+database_name = "workslocal-db"
+database_id = "17dc106c-a2e1-45c0-a517-0f3712faff6f"
+migrations_dir = "migrations"
+
+# ─── KV Namespace ───────────────────────────────────────
+[[kv_namespaces]]
+binding = "KV"
+id = "9c5ba9765276485fb721a31fc8198fe0"
+
+# ─── Scheduled (Cron) ──────────────────────────────────
+[triggers]
+crons = ["0 2 * * *"]  # Daily at 2 AM UTC — stale tunnel cleanup
+
+# ─── Custom domain routing ──────────────────────────────
+# Added after deploy:
+[[routes]]
+pattern = "*workslocal.exposed/*"
+zone_name = "workslocal.exposed"
+
+# ─── Environment variables (non-secret) ─────────────────
+[vars]
+TUNNEL_DOMAINS = "workslocal.exposed"
+API_VERSION = "v1"
+ENVIRONMENT = "production"
+
+# ─── Dev settings ───────────────────────────────────────
+[dev]
+port = 8787
+local_protocol = "http"

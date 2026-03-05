@@ -1,0 +1,33 @@
+{
+  "name": "@workslocal/relay",
+  "version": "0.0.1",
+  "private": true,
+  "description": "WorksLocal relay server — Cloudflare Workers + Durable Objects",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:scheduled": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rm -rf .wrangler dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply workslocal-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply workslocal-db --remote",
+    "db:seed:local": "wrangler d1 execute workslocal-db --local --file=seed.sql",
+    "db:seed:remote": "wrangler d1 execute workslocal-db --remote --file=seed.sql",
+    "db:studio": "drizzle-kit studio",
+    "db:reset": "rm -rf .wrangler/state && pnpm run db:migrate:local && pnpm run db:seed:local",
+    "tail": "wrangler tail",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "@workslocal/shared": "workspace:*",
+    "drizzle-orm": "^0.45.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "drizzle-kit": "^0.31.10",
+    "wrangler": "^4.76.0"
+  }
+}

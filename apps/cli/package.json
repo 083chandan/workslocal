@@ -1,0 +1,51 @@
+{
+  "name": "workslocal",
+  "version": "0.0.1",
+  "description": "Expose localhost to the internet — free, open-source tunneling tool",
+  "type": "module",
+  "bin": {
+    "workslocal": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@workslocal/client": "workspace:*",
+    "@workslocal/shared": "workspace:*",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "ora": "^9.3.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "tunnel",
+    "ngrok",
+    "localhost",
+    "https",
+    "webhook",
+    "developer-tools",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/workslocal/workslocal.git"
+  },
+  "homepage": "https://workslocal.dev",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      typescript:
+        patterns: ['typescript', '@typescript-eslint/*']
+      prisma:
+        patterns: ['prisma', '@prisma/*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

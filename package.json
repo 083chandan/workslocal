@@ -1,0 +1,81 @@
+{
+  "name": "workslocal",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Free, open-source tunneling solution — expose localhost to the internet via secure HTTPS tunnels",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md,yml,yaml}\"",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build && changeset publish",
+    "prepare": "husky",
+    "dev:relay": "pnpm --filter @workslocal/relay run dev",
+    "dev:cli": "WORKSLOCAL_SERVER_URL=ws://localhost:8787/ws pnpm --filter workslocal run dev",
+    "deploy": "pnpm --filter @workslocal/relay run deploy",
+    "db:generate": "pnpm --filter @workslocal/relay run db:generate",
+    "db:migrate:local": "pnpm --filter @workslocal/relay run db:migrate:local",
+    "db:migrate:remote": "pnpm --filter @workslocal/relay run db:migrate:remote",
+    "db:studio": "pnpm --filter @workslocal/relay run db:studio",
+    "relay:tail": "pnpm --filter @workslocal/relay exec wrangler tail"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.30.0",
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
+    "@types/node": "^20.19.37",
+    "eslint": "^9.39.4",
+    "eslint-plugin-import": "^2.32.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.8.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "turbo": "^2.8.14",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9",
+    "typescript-eslint": "^8.56.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/workslocal/workslocal.git"
+  },
+  "license": "MIT",
+  "author": "WorksLocal Contributors",
+  "homepage": "https://workslocal.dev",
+  "bugs": {
+    "url": "https://github.com/workslocal/workslocal/issues"
+  },
+  "keywords": [
+    "tunnel",
+    "ngrok",
+    "localhost",
+    "https",
+    "websocket",
+    "proxy",
+    "developer-tools"
+  ],
+  "pnpm": {
+    "overrides": {
+      "esbuild@<=0.24.2": ">=0.25.0"
+    }
+  }
+}

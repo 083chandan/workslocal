@@ -1,0 +1,32 @@
+{
+  "name": "@workslocal/shared",
+  "version": "0.0.1",
+  "description": "Shared types, Zod schemas, constants, and utilities for WorksLocal",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.check.json",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT"
+}
