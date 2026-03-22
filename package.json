@@ -2,7 +2,7 @@
   "name": "workslocal",
   "version": "0.0.1",
   "private": true,
-  "description": "Free, open-source tunneling solution — expose localhost to the internet via secure HTTPS tunnels",
+  "description": "Free, open-source tunneling solution - expose localhost to the internet via secure HTTPS tunnels",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20.0.0",

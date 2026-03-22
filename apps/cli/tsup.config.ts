@@ -9,7 +9,7 @@ export default defineConfig({
   clean: true,
   // Bundle workspace deps into the CLI so npm install doesn't need monorepo resolution
   noExternal: ['@workslocal/client', '@workslocal/shared'],
-  external: ['ws'], // CJS module — can't bundle into ESM
+  external: ['ws'], // CJS module - can't bundle into ESM
   banner: {
     // Shebang for global CLI execution
     js: '#!/usr/bin/env node',

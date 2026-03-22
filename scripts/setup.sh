@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "🚀 WorksLocal — Development Setup"
+echo "🚀 WorksLocal - Development Setup"
 echo "=================================="
 
 # Check Node.js

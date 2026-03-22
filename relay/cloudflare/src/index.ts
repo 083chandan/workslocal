@@ -1,9 +1,10 @@
 import { STALE_THRESHOLD_DAYS } from '@workslocal/shared';
 
+import { authenticateRequest } from './auth.js';
 import { createDb } from './db/index.js';
-import { getActiveDomains } from './db/queries.js';
-import { cleanupStaleTunnels } from './db/queries.js';
+import { getActiveDomains, cleanupStaleTunnels } from './db/queries.js';
 import { checkRateLimit, RATE_LIMITS } from './rate-limit.js';
+import { handleCreateKey, handleListKeys, handleRevokeKey } from './routes/keys.js';
 import type { Env } from './types.js';
 import { handleCors, withCors } from './utils/cors.js';
 import { parseTunnelHost } from './utils/host.js';
@@ -16,7 +17,6 @@ export { TunnelDO } from './tunnel.js';
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
-    // CORS preflight
     const corsResponse = handleCors(request);
     if (corsResponse) return corsResponse;
 
@@ -27,24 +27,37 @@ export default {
     let response: Response;
 
     try {
-      // ─── Check if this is tunnel traffic ──────────────
       const tunnel = parseTunnelHost(host, tunnelDomains);
 
       if (tunnel) {
-        // Route to Durable Object by subdomain
         response = await routeToDO(request, env, tunnel.subdomain, tunnel.domain);
       } else if (url.pathname === '/health') {
         response = handleHealth();
       } else if (url.pathname === '/health/ready') {
         response = await handleHealthReady(env);
       } else if (url.pathname === '/ws') {
-        // WebSocket connection — route to DO
-        // Client sends subdomain in create_tunnel message after connecting
-        // For now, use a temporary DO until tunnel is created
         response = await routeWebSocket(request, env);
-      } else if (url.pathname.startsWith('/api/v1/')) {
-        // API routes (Step 5+)
-        response = error('NOT_IMPLEMENTED', 'API routes coming in Ship 2', 501);
+      } else if (url.pathname === '/auth/login') {
+        response = handleAuthLoginPage(url, env);
+      } else if (url.pathname === '/auth/callback') {
+        response = handleAuthCallback(url, env);
+      } else if (url.pathname === '/api/v1/account' && request.method === 'GET') {
+        const auth = await authenticateRequest(request, env);
+        if (!auth.authenticated || !auth.userId) {
+          response = error('AUTH_FAILED', auth.error ?? 'Authentication required', 401);
+        } else {
+          response = success({ id: auth.userId, email: auth.email });
+        }
+      } else if (url.pathname === '/api/v1/keys' && request.method === 'POST') {
+        const auth = await authenticateRequest(request, env);
+        response = await handleCreateKey(request, env, auth);
+      } else if (url.pathname === '/api/v1/keys' && request.method === 'GET') {
+        const auth = await authenticateRequest(request, env);
+        response = await handleListKeys(env, auth);
+      } else if (url.pathname.startsWith('/api/v1/keys/') && request.method === 'DELETE') {
+        const keyId = url.pathname.split('/').pop() ?? '';
+        const auth = await authenticateRequest(request, env);
+        response = await handleRevokeKey(keyId, env, auth);
       } else {
         response = error('NOT_FOUND', `Route not found: ${url.pathname}`, 404);
       }
@@ -57,7 +70,6 @@ export default {
       );
     }
 
-    // Add standard headers and CORS
     response = withStandardHeaders(response, env.API_VERSION);
     response = withCors(response);
 
@@ -65,17 +77,20 @@ export default {
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    const startTime = Date.now();
-    log.info('[cron] Stale tunnel cleanup started', { startTime });
+    log.info('Stale tunnel cleanup started');
 
     try {
       const db = createDb(env.DB);
-      const removed = await cleanupStaleTunnels(db, STALE_THRESHOLD_DAYS);
+      const startTime = Date.now();
+      const removed = await cleanupStaleTunnels(db, Number(STALE_THRESHOLD_DAYS));
       const durationMs = Date.now() - startTime;
 
-      log.info('[cron] Stale tunnel cleanup complete', { removed, durationMs });
+      log.info('Stale tunnel cleanup complete', {
+        removed: String(removed),
+        durationMs: String(durationMs),
+      });
     } catch (err) {
-      log.error('[cron] Stale tunnel cleanup failed', {
+      log.error('Stale tunnel cleanup failed', {
         err: err instanceof Error ? err.message : String(err),
       });
     }
@@ -92,11 +107,9 @@ async function handleHealthReady(env: Env): Promise<Response> {
   try {
     const db = createDb(env.DB);
 
-    // Test D1 via Drizzle
     const domains = await getActiveDomains(db);
     const dbOk = domains.length > 0;
 
-    // Test KV
     const kvTestKey = '__health_check__';
     await env.KV.put(kvTestKey, 'ok', { expirationTtl: 60 });
     const kvValue = await env.KV.get(kvTestKey);
@@ -122,17 +135,12 @@ async function handleHealthReady(env: Env): Promise<Response> {
 
 // ─── Durable Object Routing ─────────────────────────────
 
-/**
- * Route tunnel HTTP traffic to the correct Durable Object.
- * Looks up KV to find which connection DO handles this subdomain.
- */
 async function routeToDO(
   request: Request,
   env: Env,
   subdomain: string,
   domain: string,
 ): Promise<Response> {
-  // Rate limit: per-tunnel
   const tunnelRate = RATE_LIMITS.tunnel(subdomain, domain);
   const tunnelResult = await checkRateLimit(
     env,
@@ -145,7 +153,6 @@ async function routeToDO(
     return error('RATE_LIMITED', 'Tunnel rate limit exceeded (1,000 requests/hour)', 429);
   }
 
-  // Rate limit: per-IP (anonymous)
   const clientIp = request.headers.get('CF-Connecting-IP') ?? 'unknown';
   const ipRate = RATE_LIMITS.anonymousIp(clientIp);
   const ipResult = await checkRateLimit(env, ipRate.scope, ipRate.limit, ipRate.windowSeconds);
@@ -154,7 +161,6 @@ async function routeToDO(
     return error('RATE_LIMITED', 'IP rate limit exceeded (200 requests/minute)', 429);
   }
 
-  // KV lookup for tunnel
   const kvKey = `tunnel:${domain}:${subdomain}`;
   const connectionName = await env.KV.get(kvKey);
 
@@ -177,49 +183,174 @@ async function routeToDO(
   return doStub.fetch(doRequest);
 }
 
-/**
- * Route WebSocket connections to a Durable Object.
- *
- * The WebSocket connection doesn't know which subdomain it wants yet —
- * the client sends create_tunnel after connecting. So we route to a
- * "connection manager" DO that handles the initial WebSocket and
- * tunnel creation.
- *
- * Architecture: Each WS connection gets its own DO instance (keyed by
- * a random connection ID). When the client sends create_tunnel, the DO
- * registers the subdomain mapping. Tunnel HTTP traffic is routed to
- * a separate DO keyed by subdomain.
- *
- * SIMPLIFICATION FOR SHIP 1: Since we only support one tunnel per CLI
- * session, we can route the WS to the subdomain's DO directly — but
- * we don't know the subdomain yet. Two options:
- *
- * Option A: Client sends subdomain as query param: /ws?name=myapp
- * Option B: Client connects to a random DO, sends create_tunnel,
- *           and the DO handles everything internally.
- *
- * We go with Option B — it matches the existing protocol. The client
- * connects, sends create_tunnel, and gets back tunnel_created.
- * The DO internally registers itself for the subdomain.
- */
 async function routeWebSocket(request: Request, env: Env): Promise<Response> {
-  // Verify this is a WebSocket upgrade request
   const upgradeHeader = request.headers.get('Upgrade');
   if (upgradeHeader?.toLowerCase() !== 'websocket') {
     return error('BAD_REQUEST', 'Expected WebSocket upgrade', 400);
   }
 
-  // Generate a unique connection ID for this WS session
   const connectionId = crypto.randomUUID();
 
-  // Route to a DO keyed by connection ID
-  // This DO will handle the WS lifecycle and register subdomain mapping
   const doId = env.TUNNEL.idFromName(`conn:${connectionId}`);
   const doStub = env.TUNNEL.get(doId);
 
-  // Pass connection ID to the DO
   const doRequest = new Request(request.url, request);
   doRequest.headers.set('X-Connection-Id', connectionId);
 
   return doStub.fetch(doRequest);
+}
+
+// ─── Auth Pages ──────────────────────────────────────────
+
+/**
+ * /auth/login - loads Clerk JS, redirects to hosted sign-in.
+ *
+ * Flow:
+ * 1. CLI opens browser → /auth/login?callback=...&state=...
+ * 2. Clerk.load() → if already signed in → grab token+email → redirect to CLI
+ * 3. If not signed in → redirectToSignIn() → Clerk hosted UI
+ * 4. After sign-in → Clerk redirects to /auth/callback
+ */
+function handleAuthLoginPage(url: URL, env: Env): Response {
+  const callback = url.searchParams.get('callback') ?? '';
+  const state = url.searchParams.get('state') ?? '';
+  const pk = env.CLERK_PUBLISHABLE_KEY;
+
+  const afterSignInUrl = `https://api.workslocal.dev/auth/callback?callback=${encodeURIComponent(callback)}&state=${state}`;
+
+  const html = `<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8">
+  <title>WorksLocal - Sign In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui; background: #0a0a0a; color: #fff; display: flex;
+           justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    #app { width: 400px; text-align: center; }
+    h1 { font-size: 1.5rem; margin-bottom: 2rem; }
+    .loading { color: #888; }
+    .error { color: #ef4444; margin-top: 1rem; display: none; }
+  </style>
+</head><body>
+  <div id="app">
+    <h1>WorksLocal</h1>
+    <p class="loading" id="loading">Redirecting to sign-in...</p>
+    <p class="error" id="error"></p>
+  </div>
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="${pk}"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+  <script>
+    var CALLBACK = decodeURIComponent('${encodeURIComponent(callback)}');
+    var STATE = '${state}';
+    var AFTER_SIGN_IN = '${afterSignInUrl}';
+
+    window.addEventListener('load', async function() {
+      try {
+        await window.Clerk.load();
+
+        if (window.Clerk.user) {
+          var token = await window.Clerk.session.getToken();
+          var email = window.Clerk.user.primaryEmailAddress
+            ? window.Clerk.user.primaryEmailAddress.emailAddress
+            : '';
+          window.location.href = CALLBACK
+            + '?token=' + encodeURIComponent(token)
+            + '&state=' + STATE
+            + '&email=' + encodeURIComponent(email);
+          return;
+        }
+
+        window.Clerk.redirectToSignIn({
+          afterSignInUrl: AFTER_SIGN_IN,
+        });
+      } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        var errorEl = document.getElementById('error');
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body></html>`;
+
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html' },
+  });
+}
+
+/**
+ * /auth/callback - receives redirect from Clerk after sign-in.
+ * Grabs session token + email → redirects to CLI's local callback.
+ */
+function handleAuthCallback(url: URL, env: Env): Response {
+  const callback = url.searchParams.get('callback') ?? '';
+  const state = url.searchParams.get('state') ?? '';
+  const pk = env.CLERK_PUBLISHABLE_KEY;
+
+  const html = `<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8">
+  <title>WorksLocal - Completing sign-in...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui; background: #0a0a0a; color: #fff; display: flex;
+           justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    #app { text-align: center; }
+    .loading { color: #888; }
+    .error { color: #ef4444; margin-top: 1rem; display: none; }
+  </style>
+</head><body>
+  <div id="app">
+    <p class="loading" id="loading">Completing sign-in...</p>
+    <p class="error" id="error"></p>
+  </div>
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="${pk}"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+  <script>
+    var CALLBACK = decodeURIComponent('${encodeURIComponent(callback)}');
+    var STATE = '${state}';
+
+    window.addEventListener('load', async function() {
+      try {
+        await window.Clerk.load();
+
+        if (window.Clerk.user) {
+          var token = await window.Clerk.session.getToken();
+          var email = window.Clerk.user.primaryEmailAddress
+            ? window.Clerk.user.primaryEmailAddress.emailAddress
+            : '';
+          window.location.href = CALLBACK
+            + '?token=' + encodeURIComponent(token)
+            + '&state=' + STATE
+            + '&email=' + encodeURIComponent(email);
+          return;
+        }
+
+        document.getElementById('loading').style.display = 'none';
+        var errorEl = document.getElementById('error');
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Sign-in was not completed. Please close this tab and try "workslocal login" again.';
+      } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        var errorEl = document.getElementById('error');
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body></html>`;
+
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html' },
+  });
 }

@@ -2,7 +2,7 @@
   "name": "@workslocal/relay",
   "version": "0.0.1",
   "private": true,
-  "description": "WorksLocal relay server — Cloudflare Workers + Durable Objects",
+  "description": "WorksLocal relay server - Cloudflare Workers + Durable Objects",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

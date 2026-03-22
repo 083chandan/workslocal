@@ -1,7 +1,7 @@
 {
   "name": "@workslocal/client",
   "version": "0.0.1",
-  "description": "WorksLocal tunnel client — WebSocket, local proxy, request capture",
+  "description": "WorksLocal tunnel client - WebSocket, local proxy, request capture",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

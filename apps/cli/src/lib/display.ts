@@ -103,7 +103,7 @@ export function printError(message: string, suggestion?: string): void {
 // ─── Connection status ───────────────────────────────────
 
 export function printConnecting(): void {
-  // Returns nothing — ora spinner handles this
+  // Returns nothing - ora spinner handles this
 }
 
 export function printDisconnected(code: number, reason: string): void {

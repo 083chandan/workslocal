@@ -5,9 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 # ─── Durable Objects ────────────────────────────────────
 [durable_objects]
-bindings = [
-  { name = "TUNNEL", class_name = "TunnelDO" }
-]
+bindings = [{ name = "TUNNEL", class_name = "TunnelDO" }]
 
 [[migrations]]
 tag = "v1"
@@ -27,7 +25,7 @@ id = "9c5ba9765276485fb721a31fc8198fe0"
 
 # ─── Scheduled (Cron) ──────────────────────────────────
 [triggers]
-crons = ["0 2 * * *"]  # Daily at 2 AM UTC — stale tunnel cleanup
+crons = ["0 2 * * *"] # Daily at 2 AM UTC - stale tunnel cleanup
 
 # ─── Custom domain routing ──────────────────────────────
 # Added after deploy:
@@ -40,6 +38,7 @@ zone_name = "workslocal.exposed"
 TUNNEL_DOMAINS = "workslocal.exposed"
 API_VERSION = "v1"
 ENVIRONMENT = "production"
+CLERK_PUBLISHABLE_KEY = "pk_test_bG92aW5nLXN1bmJpcmQtNzYuY2xlcmsuYWNjb3VudHMuZGV2JA"
 
 # ─── Dev settings ───────────────────────────────────────
 [dev]

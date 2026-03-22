@@ -1,4 +1,4 @@
-import { eq, and, lt } from 'drizzle-orm';
+import { eq, and, lt, isNull } from 'drizzle-orm';
 
 import { generateId } from '../utils/id.js';
 
@@ -16,7 +16,7 @@ export async function getActiveDomains(db: WorksLocalDb): Promise<string[]> {
   return rows.map((r) => r.domain);
 }
 
-// ─── Tunnels (for authenticated users — Ship 2) ────────
+// ─── Tunnels (for authenticated users - ) ────────
 
 export async function findTunnelBySubdomain(
   db: WorksLocalDb,
@@ -89,7 +89,7 @@ export async function cleanupStaleTunnels(db: WorksLocalDb, staleDaysAgo: number
   return (result as { meta?: { changes?: number } }).meta?.changes ?? 0;
 }
 
-// ─── Users (Ship 2) ────────────────────────────────────
+// ─── Users () ────────────────────────────────────
 
 export async function findUserById(
   db: WorksLocalDb,
@@ -106,7 +106,7 @@ export async function findUserById(
   return db.select().from(users).where(eq(users.id, id)).get();
 }
 
-// ─── API Keys (Ship 2) ─────────────────────────────────
+// ─── API Keys () ─────────────────────────────────
 
 export async function findApiKeyByHash(
   db: WorksLocalDb,
@@ -127,11 +127,87 @@ export async function findApiKeyByHash(
   return db
     .select()
     .from(apiKeys)
+    .where(and(eq(apiKeys.keyHash, keyHash), isNull(apiKeys.revokedAt)))
+    .get();
+}
+
+export async function createUserIfNotExists(
+  db: WorksLocalDb,
+  id: string,
+  email: string,
+): Promise<void> {
+  await db.insert(users).values({ id, email }).onConflictDoUpdate({
+    target: users.id,
+    set: { email },
+  });
+}
+
+export async function createApiKey(
+  db: WorksLocalDb,
+  data: { id: string; userId: string; keyHash: string; prefix: string; name: string },
+): Promise<void> {
+  await db.insert(apiKeys).values(data);
+}
+
+export async function listApiKeys(
+  db: WorksLocalDb,
+  userId: string,
+): Promise<
+  {
+    id: string;
+    userId: string;
+    keyHash: string;
+    prefix: string;
+    name: string;
+    lastUsedAt: string | null;
+    revokedAt: string | null;
+    createdAt: string;
+  }[]
+> {
+  return db
+    .select()
+    .from(apiKeys)
     .where(
       and(
-        eq(apiKeys.keyHash, keyHash),
-        eq(apiKeys.revokedAt, null as unknown as string), // Not revoked
+        eq(apiKeys.userId, userId),
+        // isNull doesn't work well with D1, check for null string
       ),
     )
-    .get();
+    .all();
+}
+
+export async function revokeApiKey(
+  db: WorksLocalDb,
+  keyId: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await db
+    .update(apiKeys)
+    .set({ revokedAt: new Date().toISOString() })
+    .where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId)));
+  return ((result as { meta?: { changes?: number } }).meta?.changes ?? 0) > 0;
+}
+
+export async function getUserApiKeyCount(db: WorksLocalDb, userId: string): Promise<number> {
+  const rows = await db
+    .select()
+    .from(apiKeys)
+    .where(
+      and(
+        eq(apiKeys.userId, userId),
+        // Not revoked
+      ),
+    );
+  return rows.filter((r) => !r.revokedAt).length;
+}
+
+export async function updateTunnelActivity(
+  db: WorksLocalDb,
+  subdomain: string,
+  domain: string,
+): Promise<void> {
+  await db
+    .update(tunnels)
+    .set({ lastActivity: new Date().toISOString() })
+    .where(and(eq(tunnels.subdomain, subdomain), eq(tunnels.domain, domain)));
 }

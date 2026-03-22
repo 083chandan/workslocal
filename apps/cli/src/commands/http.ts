@@ -11,7 +11,7 @@ import {
   printSummary,
 } from '../lib/display.js';
 import { createCliLogger } from '../lib/logger.js';
-import { getServerUrl } from '../utils/config.js';
+import { getServerUrl, readConfig } from '../utils/config.js';
 
 interface HttpCommandOptions {
   name?: string | undefined;
@@ -39,6 +39,7 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
   }
 
   // ─── Create client ──────────────────────────────────────
+  const cliConfig = readConfig();
   const serverUrl = getServerUrl(options.server);
   const logger = createCliLogger({ verbose: options.verbose });
 
@@ -46,6 +47,7 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
     serverUrl,
     logger,
     clientVersion: '0.0.1', // TODO: read from package.json
+    authToken: cliConfig.sessionToken ?? undefined,
   });
 
   const startTime = Date.now();
@@ -81,7 +83,7 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
       name: options.name,
       domain: options.domain,
     });
-    tunnelSpinner.stop(); // stop without message — banner shows the result
+    tunnelSpinner.stop(); // stop without message - banner shows the result
   } catch (err) {
     tunnelSpinner.fail('Failed to create tunnel');
     const message = err instanceof Error ? err.message : String(err);
@@ -139,7 +141,7 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
   });
 
   client.on('error', (err: Error) => {
-    // Don't print every error — some are handled by specific handlers above
+    // Don't print every error - some are handled by specific handlers above
     logger.debug('Client error', { err: err.message });
   });
 

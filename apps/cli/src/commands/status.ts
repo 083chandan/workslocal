@@ -13,8 +13,8 @@ interface StatusCommandOptions {
  *
  * Lists all active tunnels on the current connection.
  *
- * Note: For Ship 1 (anonymous, no auth), this only shows tunnels
- * from the current CLI session. Ship 2 (authenticated) will query
+ * Note: For  (anonymous, no auth), this only shows tunnels
+ * from the current CLI session.  (authenticated) will query
  * the server API to show all user tunnels across sessions.
  */
 export async function statusCommand(options: StatusCommandOptions): Promise<void> {
@@ -24,13 +24,13 @@ export async function statusCommand(options: StatusCommandOptions): Promise<void
   const client = new TunnelClient({
     serverUrl,
     logger,
-    autoReconnect: false, // don't retry — just check and exit
+    autoReconnect: false, // don't retry - just check and exit
   });
 
   try {
     await client.connect();
-    // Ship 1: no API to query tunnels — just show that we connected
-    // Ship 2: GET /api/v1/tunnels with auth
+    // : no API to query tunnels - just show that we connected
+    // : GET /api/v1/tunnels with auth
     printTunnelList(client.getAllTunnels());
     client.disconnect();
   } catch (err) {

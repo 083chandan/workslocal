@@ -18,5 +18,6 @@ export interface Env {
   ENVIRONMENT: string;
 
   // Secrets (set via `wrangler secret put`)
-  CLERK_SECRET_KEY?: string;
+  CLERK_SECRET_KEY: string;
+  CLERK_PUBLISHABLE_KEY: string;
 }

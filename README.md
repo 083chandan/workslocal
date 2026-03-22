@@ -1,6 +1,6 @@
 # WorksLocal
 
-> Free, open-source tunneling — expose localhost to the internet via secure HTTPS tunnels.
+> Free, open-source tunneling - expose localhost to the internet via secure HTTPS tunnels.
 
 [![CI](https://github.com/workslocal/workslocal/actions/workflows/ci.yml/badge.svg)](https://github.com/workslocal/workslocal/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -11,13 +11,13 @@ WorksLocal is a free alternative to ngrok. It creates secure HTTPS tunnels so yo
 
 ## Features
 
-- **HTTPS tunnels** — Expose `localhost` via `https://myapp.workslocal.exposed`
-- **Multiple domains** — Choose from `.exposed`, `.io`, or `.run`
-- **Desktop app** — Dark-mode GUI with real-time request monitoring (macOS + Windows)
-- **CLI tool** — `workslocal http 3000` and you're live
-- **REST API** — Programmatic tunnel management
-- **AI integration** — MCP server for Claude, TypeScript SDK, OpenAPI spec
-- **Free & open source** — MIT licensed, forever free
+- **HTTPS tunnels** - Expose `localhost` via `https://myapp.workslocal.exposed`
+- **Multiple domains** - Choose from `.exposed`, `.io`, or `.run`
+- **Desktop app** - Dark-mode GUI with real-time request monitoring (macOS + Windows)
+- **CLI tool** - `workslocal http 3000` and you're live
+- **REST API** - Programmatic tunnel management
+- **AI integration** - MCP server for Claude, TypeScript SDK, OpenAPI spec
+- **Free & open source** - MIT licensed, forever free
 
 ## Quick Start
 
@@ -97,7 +97,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT - see [LICENSE](LICENSE) for details.
 
 ```
 
@@ -107,7 +107,7 @@ MIT — see [LICENSE](LICENSE) for details.
 
 - **Redis health check:** Pings Redis every 10 seconds. Uses the password so it actually authenticates.
 
-- **Custom network:** Both services on the same `workslocal` bridge network. Redis is not exposed to the host — only the relay server can reach it via the Docker DNS name `redis`.
+- **Custom network:** Both services on the same `workslocal` bridge network. Redis is not exposed to the host - only the relay server can reach it via the Docker DNS name `redis`.
 
 - **`REDIS_PASSWORD` from env:** Set this in your `.env.production` file. The docker-compose reads it for the Redis command, and your server reads `REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379` from the env file.
 

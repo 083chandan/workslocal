@@ -46,6 +46,9 @@ export {
   API_KEY_PREFIX,
   API_VERSION,
   ANONYMOUS_TUNNEL_TTL_MS,
+  AUTH_CACHE_TTL_SECONDS,
+  MAX_TUNNELS_ANONYMOUS,
+  MAX_TUNNELS_AUTHENTICATED,
 } from './constants.js';
 export type { TunnelDomainName } from './constants.js';
 

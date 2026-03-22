@@ -44,6 +44,14 @@ export default tseslint.config(
     },
   },
 
+  // ─── shared: console.log in the logger ────────────────────
+  {
+    files: ['packages/shared/src/logger.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   // ─── CLI: console.log IS the output ────────────────────
   {
     files: ['apps/cli/**/*.ts'],

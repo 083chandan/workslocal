@@ -8,6 +8,7 @@ import {
 } from '@workslocal/shared';
 import WebSocket from 'ws';
 
+import { getAnonymousToken } from './auth.js';
 import { createLocalProxy, type LocalProxy } from './local-proxy.js';
 import { createRequestStore, type RequestStore } from './request-store.js';
 import type {
@@ -18,14 +19,12 @@ import type {
   TunnelInfo,
 } from './types.js';
 
-import { getAnonymousToken } from './index.js';
-
-// --- Typed event emitter ---
+// ─── Typed event emitter ─────────────────────────────────
 
 type EventHandler<T extends (...args: never[]) => void> = T;
 type EventMap = { [K in keyof TunnelClientEvents]: Set<EventHandler<TunnelClientEvents[K]>> };
 
-// --- Reconnect config ---
+// ─── Reconnect config ────────────────────────────────────
 
 const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 30_000;
@@ -34,16 +33,23 @@ const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
 /**
  * WorksLocal Tunnel Client.
  *
- * This is the core client library used by both CLI and desktop app.
- * It manages the WebSocket connection to the relay server, handles
+ * Core client library used by both CLI and desktop app.
+ * Manages WebSocket connection to the relay server, handles
  * tunnel creation/closing, heartbeat, auto-reconnect, local HTTP
  * proxying, and request capture.
  *
+ *  additions:
+ * - authToken option: API key (wl_k_...) passed in create_tunnel
+ * - isPersistent tracking on TunnelInfo
+ * - Anonymous token always sent as fallback
+ *
  * Usage:
  * ```typescript
- * const client = new TunnelClient({ serverUrl: "ws://localhost:3000/ws" });
+ * const client = new TunnelClient({
+ *   serverUrl: "wss://api.workslocal.dev/ws",
+ *   authToken: "wl_k_abc123...",  // optional - omit for anonymous
+ * });
  * client.on("tunnel:created", (tunnel) => console.log(tunnel.publicUrl));
- * client.on("request:complete", (req) => console.log(req.method, req.path, req.responseStatusCode));
  * await client.connect();
  * await client.createTunnel({ port: 3000, name: "myapp" });
  * ```
@@ -56,13 +62,16 @@ export class TunnelClient {
   private readonly clientVersion: string;
   private readonly autoReconnect: boolean;
   private readonly maxReconnectAttempts: number;
+  private readonly authToken: string | undefined;
   private reconnectAttempt = 0;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private heartbeatTimer: NodeJS.Timeout | null = null;
+  private autoReconnectEnabled = true;
 
   // Tunnel state
   private readonly tunnels = new Map<string, TunnelInfo>();
   private readonly portMap = new Map<string, number>(); // tunnelId → localPort
+  private pendingPort: number | null = null;
 
   // Components
   private readonly localProxy: LocalProxy;
@@ -88,12 +97,22 @@ export class TunnelClient {
     this.clientVersion = options.clientVersion ?? '0.0.1';
     this.autoReconnect = options.autoReconnect ?? true;
     this.maxReconnectAttempts = options.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS;
+    this.authToken = options.authToken;
 
     this.localProxy = createLocalProxy({ logger: this.log });
     this.requestStore = createRequestStore();
   }
 
-  // ─── Event system ────────────────────────────────────────
+  // ─── Public: Auth status ───────────────────────────────
+
+  /**
+   * Whether this client has an auth token (logged in).
+   */
+  get isAuthenticated(): boolean {
+    return Boolean(this.authToken);
+  }
+
+  // ─── Event system ──────────────────────────────────────
 
   on<K extends keyof TunnelClientEvents>(event: K, handler: TunnelClientEvents[K]): void {
     (this.listeners[event] as Set<TunnelClientEvents[K]>).add(handler);
@@ -119,7 +138,7 @@ export class TunnelClient {
     }
   }
 
-  // ─── Connection ──────────────────────────────────────────
+  // ─── Connection ────────────────────────────────────────
 
   /**
    * Connect to the relay server.
@@ -147,7 +166,16 @@ export class TunnelClient {
       });
 
       this.ws.on('message', (data: WebSocket.Data) => {
-        const raw = typeof data === 'string' ? data : (data as Buffer).toString('utf-8');
+        let raw: string;
+        if (typeof data === 'string') {
+          raw = data;
+        } else if (Buffer.isBuffer(data)) {
+          raw = data.toString('utf-8');
+        } else if (Array.isArray(data)) {
+          raw = Buffer.concat(data).toString('utf-8');
+        } else {
+          raw = Buffer.from(data).toString('utf-8');
+        }
         void this.handleMessage(raw);
       });
 
@@ -162,8 +190,7 @@ export class TunnelClient {
         });
         this.emit('disconnected', code, reasonStr);
 
-        // Auto-reconnect if enabled and this wasn't a clean close
-        if (this.autoReconnect && code !== 1000) {
+        if (this.autoReconnect && this.autoReconnectEnabled && code !== 1000) {
           void this.attemptReconnect();
         }
       });
@@ -172,7 +199,6 @@ export class TunnelClient {
         this.log.error('WebSocket error', { err: err.message });
         this.emit('error', err);
 
-        // If we're still connecting, reject the connect() promise
         if (this.state === 'connecting') {
           reject(err);
         }
@@ -185,17 +211,15 @@ export class TunnelClient {
    * Closes all tunnels and stops heartbeat.
    */
   disconnect(): void {
-    this.autoReconnectEnabled = false; // prevent reconnect on intentional close
+    this.autoReconnectEnabled = false;
 
     this.stopHeartbeat();
     this.clearReconnectTimer();
 
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      // Close all tunnels first
       for (const tunnelId of this.tunnels.keys()) {
         this.send({ type: 'close_tunnel', tunnel_id: tunnelId });
       }
-
       this.ws.close(1000, 'Client disconnect');
     }
 
@@ -204,14 +228,14 @@ export class TunnelClient {
     this.state = 'disconnected';
   }
 
-  // Temporary flag to prevent reconnect on intentional disconnect
-  private autoReconnectEnabled = true;
-
-  // ─── Tunnel management ───────────────────────────────────
+  // ─── Tunnel management ─────────────────────────────────
 
   /**
    * Create a new tunnel.
    * Returns a Promise that resolves with the tunnel info.
+   *
+   * If authToken is set, sends it in create_tunnel for persistent subdomain.
+   * Always sends anonymous_token as fallback for subdomain reclaim.
    */
   async createTunnel(options: {
     port: number;
@@ -224,18 +248,21 @@ export class TunnelClient {
 
     return new Promise<TunnelInfo>((resolve, reject) => {
       const timeout = setTimeout(() => {
+        this.off('tunnel:created', handler);
+        this.off('error', errorHandler);
         reject(new Error('Tunnel creation timed out'));
       }, 10_000);
 
-      // Listen for the tunnel_created response
       const handler = (tunnel: TunnelInfo): void => {
         clearTimeout(timeout);
         this.off('tunnel:created', handler);
+        this.off('error', errorHandler);
         resolve(tunnel);
       };
 
       const errorHandler = (err: Error): void => {
         clearTimeout(timeout);
+        this.off('tunnel:created', handler);
         this.off('error', errorHandler);
         reject(err);
       };
@@ -243,23 +270,25 @@ export class TunnelClient {
       this.on('tunnel:created', handler);
       this.on('error', errorHandler);
 
-      // Send create_tunnel (snake_case wire format)
-      this.send({
+      // Build create_tunnel message (snake_case wire format)
+      const msg: Record<string, unknown> = {
         type: 'create_tunnel',
         local_port: options.port,
         custom_name: options.name,
         domain: options.domain,
         client_version: this.clientVersion,
         anonymous_token: getAnonymousToken(),
-      });
+      };
 
-      // Track the port mapping
-      // (We'll update with real tunnelId when tunnel_created arrives)
+      // : include auth token if logged in
+      if (this.authToken) {
+        msg.auth_token = this.authToken;
+      }
+
       this.pendingPort = options.port;
+      this.send(msg as unknown as ClientMessage);
     });
   }
-
-  private pendingPort: number | null = null;
 
   /**
    * Close a tunnel by ID.
@@ -269,7 +298,6 @@ export class TunnelClient {
       this.log.warn('Tunnel not found', { tunnelId });
       return;
     }
-
     this.send({ type: 'close_tunnel', tunnel_id: tunnelId });
   }
 
@@ -310,9 +338,9 @@ export class TunnelClient {
     return this.tunnels.size;
   }
 
-  // ─── Message handling ────────────────────────────────────
+  // ─── Message handling ──────────────────────────────────
 
-  private handleMessage(raw: string): void {
+  private async handleMessage(raw: string): Promise<void> {
     let msg: ServerMessage;
     try {
       msg = JSON.parse(raw) as ServerMessage;
@@ -331,11 +359,11 @@ export class TunnelClient {
         break;
 
       case 'http_request':
-        void this.handleHttpRequest(msg);
+        await this.handleHttpRequest(msg);
         break;
 
       case 'pong':
-        // Heartbeat acknowledged — nothing to do
+        // Heartbeat acknowledged
         break;
 
       case 'error':
@@ -359,8 +387,9 @@ export class TunnelClient {
     subdomain: string;
     domain: string;
     expires_at: string;
+    is_persistent?: boolean;
+    user_id?: string | null;
   }): void {
-    // snake_case wire → camelCase internal
     const tunnel: TunnelInfo = {
       tunnelId: msg.tunnel_id,
       publicUrl: msg.public_url,
@@ -368,6 +397,8 @@ export class TunnelClient {
       domain: msg.domain,
       localPort: this.pendingPort ?? 0,
       expiresAt: msg.expires_at || null,
+      isPersistent: msg.is_persistent ?? false,
+      userId: msg.user_id ?? null,
       createdAt: new Date(),
     };
 
@@ -378,6 +409,7 @@ export class TunnelClient {
     this.log.info('Tunnel created', {
       tunnelId: tunnel.tunnelId,
       publicUrl: tunnel.publicUrl,
+      isPersistent: String(tunnel.isPersistent),
     });
 
     this.emit('tunnel:created', tunnel);
@@ -400,28 +432,20 @@ export class TunnelClient {
   private async handleHttpRequest(msg: HttpRequestMessage): Promise<void> {
     const startTime = Date.now();
 
-    // Find which local port this tunnel maps to
-    // We need to figure out the tunnelId from the request — but http_request
-    // doesn't include tunnel_id. We need to find it from our tunnel list
-    // by matching... actually the server sends to the right connection,
-    // so any tunnel on this connection could match.
-    // For now, find the port from the first tunnel.
-    // Better: have the server include tunnel_id in http_request.
-
-    // Find the tunnel by checking all tunnels on this connection
+    // Find which local port this tunnel maps to.
+    // http_request doesn't include tunnel_id - use first tunnel on this connection.
     let localPort = 0;
     let tunnelId = '';
     for (const [id, port] of this.portMap.entries()) {
       localPort = port;
       tunnelId = id;
-      break; // use first tunnel
+      break;
     }
 
     if (localPort === 0) {
       this.log.warn('No tunnel found for incoming request', {
         requestId: msg.request_id,
       });
-      // Send error response
       this.send({
         type: 'http_response',
         request_id: msg.request_id,
@@ -435,11 +459,9 @@ export class TunnelClient {
     this.emit('request:start', msg.request_id, msg.method, msg.path);
 
     try {
-      // Forward to localhost
       const response = await this.localProxy.forward(msg, localPort);
       const durationMs = Date.now() - startTime;
 
-      // Send response back to server (snake_case wire format)
       this.send({
         type: 'http_response',
         request_id: msg.request_id,
@@ -448,7 +470,6 @@ export class TunnelClient {
         body: response.body,
       });
 
-      // Capture the request/response pair
       const captured: CapturedRequest = {
         requestId: msg.request_id,
         tunnelId,
@@ -473,7 +494,6 @@ export class TunnelClient {
         err: errMessage,
       });
 
-      // Send error response so the server doesn't timeout
       this.send({
         type: 'http_response',
         request_id: msg.request_id,
@@ -491,7 +511,7 @@ export class TunnelClient {
     this.emit('error', new Error(`[${msg.code}] ${msg.message}`));
   }
 
-  // ─── Heartbeat ───────────────────────────────────────────
+  // ─── Heartbeat ─────────────────────────────────────────
 
   private startHeartbeat(): void {
     this.stopHeartbeat();
@@ -512,7 +532,7 @@ export class TunnelClient {
     }
   }
 
-  // ─── Reconnect ───────────────────────────────────────────
+  // ─── Reconnect ─────────────────────────────────────────
 
   private async attemptReconnect(): Promise<void> {
     if (!this.autoReconnectEnabled) return;
@@ -525,7 +545,6 @@ export class TunnelClient {
     this.reconnectAttempt++;
     this.state = 'reconnecting';
 
-    // Exponential backoff: 1s, 2s, 4s, 8s, ... capped at 30s
     const delay = Math.min(
       RECONNECT_BASE_MS * Math.pow(2, this.reconnectAttempt - 1),
       RECONNECT_MAX_MS,
@@ -570,7 +589,7 @@ export class TunnelClient {
         }
       }
     } catch {
-      // connect() failed — will trigger another reconnect via the close handler
+      // connect() failed - will trigger another reconnect via close handler
     }
   }
 
@@ -581,7 +600,7 @@ export class TunnelClient {
     }
   }
 
-  // ─── Send ────────────────────────────────────────────────
+  // ─── Send ──────────────────────────────────────────────
 
   /**
    * Send a message to the relay server.
@@ -591,7 +610,7 @@ export class TunnelClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg));
     } else {
-      this.log.warn('Cannot send — WebSocket not open', {
+      this.log.warn('Cannot send - WebSocket not open', {
         type: msg.type,
         state: String(this.ws?.readyState ?? 'null'),
       });

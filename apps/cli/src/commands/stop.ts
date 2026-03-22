@@ -12,9 +12,9 @@ interface StopCommandOptions {
  *
  * Stops a tunnel by subdomain name, or all tunnels with --all.
  *
- * Ship 1: This is a placeholder — anonymous tunnels can only be
+ * : This is a placeholder - anonymous tunnels can only be
  * stopped via Ctrl+C in the running CLI session.
- * Ship 2: Will use the REST API to stop tunnels by name.
+ * : Will use the REST API to stop tunnels by name.
  */
 export function stopCommand(name: string | undefined, options: StopCommandOptions): void {
   if (!name && !options.all) {
@@ -25,8 +25,8 @@ export function stopCommand(name: string | undefined, options: StopCommandOption
     process.exit(1);
   }
 
-  // Ship 1: No API to stop tunnels remotely
-  // Ship 2: DELETE /api/v1/tunnels/:name or DELETE /api/v1/tunnels?all=true
+  // : No API to stop tunnels remotely
+  // : DELETE /api/v1/tunnels/:name or DELETE /api/v1/tunnels?all=true
   console.log(chalk.yellow('Remote tunnel management requires authentication (coming in v0.2)'));
   console.log(chalk.gray('For now, press Ctrl+C in the running tunnel session to stop it.'));
   console.log();

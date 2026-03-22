@@ -49,7 +49,7 @@ export function createLocalProxy(deps: LocalProxyDeps): LocalProxy {
         fullPath = `${msg.path}?${params.toString()}`;
       }
 
-      // Clean up headers — remove host (will be set to localhost)
+      // Clean up headers - remove host (will be set to localhost)
       const headers = { ...msg.headers };
       delete headers.host;
       delete headers.Host;
@@ -103,7 +103,7 @@ export function createLocalProxy(deps: LocalProxyDeps): LocalProxy {
           });
         });
 
-        // Connection refused — local server not running
+        // Connection refused - local server not running
         proxyReq.on('error', (err: NodeJS.ErrnoException) => {
           if (err.code === 'ECONNREFUSED') {
             log.warn('Local server not running', {
@@ -111,7 +111,7 @@ export function createLocalProxy(deps: LocalProxyDeps): LocalProxy {
               host: localHost,
             });
 
-            // Return a 502 instead of rejecting — the tunnel stays open
+            // Return a 502 instead of rejecting - the tunnel stays open
             resolve({
               statusCode: 502,
               headers: { 'content-type': 'text/plain' },

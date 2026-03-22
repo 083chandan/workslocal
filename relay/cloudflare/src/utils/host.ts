@@ -16,7 +16,7 @@ export function parseTunnelHost(
 
   for (const domain of tunnelDomains) {
     if (hostname === domain) {
-      // Bare domain — no subdomain
+      // Bare domain - no subdomain
       return null;
     }
 

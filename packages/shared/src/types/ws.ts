@@ -7,6 +7,7 @@ export interface CreateTunnelMessage {
   readonly domain?: string | undefined;
   readonly client_version: string;
   readonly anonymous_token?: string | undefined;
+  readonly auth_token?: string | undefined;
 }
 
 export interface CloseTunnelMessage {

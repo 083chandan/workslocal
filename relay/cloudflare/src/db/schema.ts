@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 // ─── Users ─────────────────────────────────────────────
-// Created when user authenticates via Clerk (Ship 2)
+// Created when user authenticates via Clerk ()
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(), // Clerk user ID
   email: text('email').notNull(),
@@ -31,7 +31,7 @@ export const apiKeys = sqliteTable('api_keys', {
 
 // ─── Tunnels ───────────────────────────────────────────
 // One row per persistent subdomain (authenticated users)
-// Anonymous tunnels do NOT get D1 rows — they live in DO state only
+// Anonymous tunnels do NOT get D1 rows - they live in DO state only
 export const tunnels = sqliteTable(
   'tunnels',
   {
@@ -60,7 +60,7 @@ export const tunnelDomains = sqliteTable('tunnel_domains', {
 });
 
 // ─── Tunnel Configs ────────────────────────────────────
-// Saved presets (Ship 2+)
+// Saved presets (+)
 export const tunnelConfigs = sqliteTable('tunnel_configs', {
   id: text('id').primaryKey(),
   userId: text('user_id')

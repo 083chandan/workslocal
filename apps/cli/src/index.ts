@@ -1,15 +1,18 @@
 import { Command } from 'commander';
 
 import { httpCommand } from './commands/http.js';
+import { loginCommand } from './commands/login.js';
+import { logoutCommand } from './commands/logout.js';
 import { statusCommand } from './commands/status.js';
 import { stopCommand } from './commands/stop.js';
 import { versionCommand } from './commands/version.js';
+import { whoamiCommand } from './commands/whoami.js';
 
 const program = new Command();
 
 program
   .name('workslocal')
-  .description('Expose localhost to the internet — free, open-source tunneling tool')
+  .description('Expose localhost to the internet - free, open-source tunneling tool')
   .version('0.0.1', '-v, --version', 'Print version');
 
 // ─── workslocal http <port> ──────────────────────────────
@@ -62,6 +65,21 @@ program
   .action(() => {
     versionCommand();
   });
+
+// ─── workslocal login ───────────────────────────────────
+program
+  .command('login')
+  .description('Authenticate with GitHub via WorksLocal')
+  .action(loginCommand);
+
+// ─── workslocal logout ──────────────────────────────────
+program
+  .command('logout')
+  .description('Sign out and clear stored credentials')
+  .action(logoutCommand);
+
+// ─── workslocal whoami ──────────────────────────────────
+program.command('whoami').description('Show current authenticated user').action(whoamiCommand);
 
 // ─── Parse and run ──────────────────────────────────────
 program.parseAsync(process.argv).catch((err: unknown) => {

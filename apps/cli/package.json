@@ -1,7 +1,7 @@
 {
   "name": "workslocal",
   "version": "0.0.1",
-  "description": "Expose localhost to the internet — free, open-source tunneling tool",
+  "description": "Expose localhost to the internet - free, open-source tunneling tool",
   "type": "module",
   "bin": {
     "workslocal": "./dist/index.js"

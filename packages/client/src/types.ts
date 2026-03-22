@@ -11,6 +11,8 @@ export interface TunnelInfo {
   readonly domain: string;
   readonly localPort: number;
   readonly expiresAt: string | null;
+  readonly isPersistent: boolean;
+  readonly userId: string | null;
   readonly createdAt: Date;
 }
 
@@ -34,7 +36,7 @@ export interface CapturedRequest {
 export interface TunnelClientOptions {
   /** Relay server URL (e.g., "ws://localhost:3000/ws" or "wss://api.workslocal.dev/ws") */
   serverUrl: string;
-  /** Logger instance — CLI passes chalk logger, desktop passes file logger, tests pass silent */
+  /** Logger instance - CLI passes chalk logger, desktop passes file logger, tests pass silent */
   logger?: WLLogger | undefined;
   /** Client version string sent in create_tunnel */
   clientVersion?: string | undefined;
@@ -42,6 +44,8 @@ export interface TunnelClientOptions {
   autoReconnect?: boolean | undefined;
   /** Max reconnect attempts (default: 10) */
   maxReconnectAttempts?: number | undefined;
+  /** Optional auth token for authenticated users */
+  authToken?: string | undefined;
 }
 
 // --- Events emitted by TunnelClient ---

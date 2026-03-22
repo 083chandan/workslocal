@@ -35,7 +35,7 @@ export function createCliLogger(options?: CliLoggerOptions): WLLogger {
     if ((LEVEL_PRIORITY[level] ?? 2) < minLevel) return;
 
     const colorFn = LEVEL_COLORS[level];
-    // info level gets no prefix — cleaner output for normal messages
+    // info level gets no prefix - cleaner output for normal messages
     const prefix = level === 'info' ? '' : `${colorFn(`[${level}]`)} `;
     const suffix = data ? chalk.gray(` ${JSON.stringify(data)}`) : '';
 

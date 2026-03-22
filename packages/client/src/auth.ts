@@ -8,6 +8,9 @@ const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 
 interface ClientConfig {
   anonymousToken?: string;
+  sessionToken?: string;
+  userId?: string;
+  serverUrl?: string;
 }
 
 /**
@@ -60,6 +63,6 @@ export function clearCredentials(): void {
   try {
     fs.unlinkSync(CONFIG_FILE);
   } catch {
-    // File doesn't exist — that's fine
+    // File doesn't exist - that's fine
   }
 }

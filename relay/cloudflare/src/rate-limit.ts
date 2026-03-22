@@ -39,7 +39,7 @@ export async function checkRateLimit(
     };
   }
 
-  // Increment (not truly atomic — but KV is eventually consistent anyway)
+  // Increment (not truly atomic - but KV is eventually consistent anyway)
   await env.KV.put(kvKey, String(current + 1), {
     expirationTtl: windowSeconds * 2, // 2x window for safety
   });
