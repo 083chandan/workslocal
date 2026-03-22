@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 
+import { catchCommand } from './commands/catch.js';
 import { httpCommand } from './commands/http.js';
 import { loginCommand } from './commands/login.js';
 import { logoutCommand } from './commands/logout.js';
@@ -80,6 +81,18 @@ program
 
 // ─── workslocal whoami ──────────────────────────────────
 program.command('whoami').description('Show current authenticated user').action(whoamiCommand);
+
+// ─── workslocal catch ──────────────────────────────────
+program
+  .command('catch')
+  .description('Capture requests without a local server (webhook debugging)')
+  .option('-n, --name <subdomain>', 'Custom subdomain')
+  .option('-d, --domain <domain>', 'Tunnel domain')
+  .option('-s, --status <code>', 'Response status code', '200')
+  .option('-b, --body <json>', 'Response body', '{"ok":true}')
+  .option('--server <url>', 'Override relay server URL')
+  .option('-v, --verbose', 'Verbose logging')
+  .action(catchCommand);
 
 // ─── Parse and run ──────────────────────────────────────
 program.parseAsync(process.argv).catch((err: unknown) => {

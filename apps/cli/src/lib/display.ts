@@ -30,7 +30,7 @@ function colorStatus(status: number): string {
 
 // ─── Startup banner ──────────────────────────────────────
 
-export function printBanner(tunnel: TunnelInfo): void {
+export function printBanner(tunnel: TunnelInfo, inspectorUrl: string | null = null): void {
   const line = chalk.gray('─'.repeat(60));
 
   console.log();
@@ -42,10 +42,15 @@ export function printBanner(tunnel: TunnelInfo): void {
   console.log(
     `${chalk.gray('Forwarding:')}   ${chalk.white(`http://localhost:${String(tunnel.localPort)}`)}`,
   );
+  if (inspectorUrl) {
+    console.log(`${chalk.gray('Inspector:')}    ${chalk.cyan(inspectorUrl)}`);
+  }
   console.log(`${chalk.gray('Subdomain:')}    ${chalk.white(tunnel.subdomain)}`);
   console.log(`${chalk.gray('Domain:')}       ${chalk.white(tunnel.domain)}`);
 
-  if (tunnel.expiresAt) {
+  if (tunnel.isPersistent) {
+    console.log(`${chalk.gray('Type:')}         ${chalk.white('persistent (survives restart)')}`);
+  } else if (tunnel.expiresAt) {
     console.log(`${chalk.gray('Expires:')}      ${chalk.yellow(tunnel.expiresAt)}`);
   }
 

@@ -1,4 +1,6 @@
-import type { WLLogger } from '@workslocal/shared';
+import type { HttpRequestMessage, WLLogger } from '@workslocal/shared';
+
+import { LocalProxyResponse } from './index.js';
 
 // --- Connection state ---
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
@@ -46,6 +48,8 @@ export interface TunnelClientOptions {
   maxReconnectAttempts?: number | undefined;
   /** Optional auth token for authenticated users */
   authToken?: string | undefined;
+  /** Override the proxy - used by catch mode to return static responses */
+  proxyOverride?: (msg: HttpRequestMessage) => LocalProxyResponse | Promise<LocalProxyResponse>;
 }
 
 // --- Events emitted by TunnelClient ---

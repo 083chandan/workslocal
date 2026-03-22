@@ -9,7 +9,7 @@ import {
 import WebSocket from 'ws';
 
 import { getAnonymousToken } from './auth.js';
-import { createLocalProxy, type LocalProxy } from './local-proxy.js';
+import { createLocalProxy, type LocalProxy, type LocalProxyResponse } from './local-proxy.js';
 import { createRequestStore, type RequestStore } from './request-store.js';
 import type {
   CapturedRequest,
@@ -38,20 +38,19 @@ const DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
  * tunnel creation/closing, heartbeat, auto-reconnect, local HTTP
  * proxying, and request capture.
  *
- *  additions:
- * - authToken option: API key (wl_k_...) passed in create_tunnel
- * - isPersistent tracking on TunnelInfo
- * - Anonymous token always sent as fallback
+ * authToken for persistent subdomains.
+ * proxyOverride for catch mode (static responses without localhost).
  *
  * Usage:
  * ```typescript
+ * // HTTP mode (forward to localhost)
+ * const client = new TunnelClient({ serverUrl: "wss://api.workslocal.dev/ws" });
+ *
+ * // Catch mode (static response, no localhost)
  * const client = new TunnelClient({
  *   serverUrl: "wss://api.workslocal.dev/ws",
- *   authToken: "wl_k_abc123...",  // optional - omit for anonymous
+ *   proxyOverride: (msg) => ({ statusCode: 200, headers: {}, body: btoa("ok") }),
  * });
- * client.on("tunnel:created", (tunnel) => console.log(tunnel.publicUrl));
- * await client.connect();
- * await client.createTunnel({ port: 3000, name: "myapp" });
  * ```
  */
 export class TunnelClient {
@@ -63,6 +62,9 @@ export class TunnelClient {
   private readonly autoReconnect: boolean;
   private readonly maxReconnectAttempts: number;
   private readonly authToken: string | undefined;
+  private readonly proxyOverride:
+    | ((msg: HttpRequestMessage) => LocalProxyResponse | Promise<LocalProxyResponse>)
+    | undefined;
   private reconnectAttempt = 0;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private heartbeatTimer: NodeJS.Timeout | null = null;
@@ -70,7 +72,7 @@ export class TunnelClient {
 
   // Tunnel state
   private readonly tunnels = new Map<string, TunnelInfo>();
-  private readonly portMap = new Map<string, number>(); // tunnelId → localPort
+  private readonly portMap = new Map<string, number>();
   private pendingPort: number | null = null;
 
   // Components
@@ -98,6 +100,7 @@ export class TunnelClient {
     this.autoReconnect = options.autoReconnect ?? true;
     this.maxReconnectAttempts = options.maxReconnectAttempts ?? DEFAULT_MAX_RECONNECT_ATTEMPTS;
     this.authToken = options.authToken;
+    this.proxyOverride = options.proxyOverride;
 
     this.localProxy = createLocalProxy({ logger: this.log });
     this.requestStore = createRequestStore();
@@ -280,7 +283,7 @@ export class TunnelClient {
         anonymous_token: getAnonymousToken(),
       };
 
-      // : include auth token if logged in
+      // include auth token if logged in
       if (this.authToken) {
         msg.auth_token = this.authToken;
       }
@@ -429,6 +432,13 @@ export class TunnelClient {
     this.emit('tunnel:closed', msg.tunnel_id, msg.reason);
   }
 
+  /**
+   * Handle incoming HTTP request from the relay.
+   *
+   * Two modes:
+   * - Default: forwards to localhost via LocalProxy
+   * - Catch mode: uses proxyOverride to return static response
+   */
   private async handleHttpRequest(msg: HttpRequestMessage): Promise<void> {
     const startTime = Date.now();
 
@@ -442,7 +452,7 @@ export class TunnelClient {
       break;
     }
 
-    if (localPort === 0) {
+    if (localPort === 0 && !this.proxyOverride) {
       this.log.warn('No tunnel found for incoming request', {
         requestId: msg.request_id,
       });
@@ -459,7 +469,14 @@ export class TunnelClient {
     this.emit('request:start', msg.request_id, msg.method, msg.path);
 
     try {
-      const response = await this.localProxy.forward(msg, localPort);
+      // Use proxyOverride (catch mode) or LocalProxy (http mode)
+      let response: LocalProxyResponse;
+      if (this.proxyOverride) {
+        response = await this.proxyOverride(msg);
+      } else {
+        response = await this.localProxy.forward(msg, localPort);
+      }
+
       const durationMs = Date.now() - startTime;
 
       this.send({

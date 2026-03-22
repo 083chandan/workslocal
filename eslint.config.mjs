@@ -84,6 +84,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/coverage/**',
       '**/.wrangler/**',
+      '**/vite.config.ts',
       '**/*.js',
       '**/*.mjs',
       '**/*.cjs',

@@ -1,5 +1,5 @@
-import { TunnelClient } from '@workslocal/client';
-import type { CapturedRequest, TunnelInfo } from '@workslocal/client';
+import { TunnelClient, createInspectorServer } from '@workslocal/client';
+import type { CapturedRequest, TunnelInfo, InspectorServer } from '@workslocal/client';
 import ora from 'ora';
 
 import {
@@ -12,6 +12,7 @@ import {
 } from '../lib/display.js';
 import { createCliLogger } from '../lib/logger.js';
 import { getServerUrl, readConfig } from '../utils/config.js';
+import { getInspectorDistPath } from '../utils/inspector-path.js';
 
 interface HttpCommandOptions {
   name?: string | undefined;
@@ -25,6 +26,7 @@ interface HttpCommandOptions {
  *
  * Creates a tunnel forwarding from a public URL to localhost:<port>.
  * Streams incoming requests as a color-coded log.
+ * Starts web inspector at localhost:4040.
  * Ctrl+C gracefully shuts down.
  */
 export async function httpCommand(portStr: string, options: HttpCommandOptions): Promise<void> {
@@ -46,9 +48,23 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
   const client = new TunnelClient({
     serverUrl,
     logger,
-    clientVersion: '0.0.1', // TODO: read from package.json
+    clientVersion: '0.0.1',
     authToken: cliConfig.sessionToken ?? undefined,
   });
+
+  // ─── Start inspector server ──────────────────────────────
+  const inspectorDistPath = getInspectorDistPath();
+  let inspector: InspectorServer | null = null;
+
+  if (inspectorDistPath) {
+    inspector = createInspectorServer({
+      port: 4040,
+      inspectorDistPath,
+      requestStore: client.requestStore,
+      logger,
+    });
+    await inspector.start();
+  }
 
   const startTime = Date.now();
 
@@ -67,6 +83,7 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
       `Could not connect to ${serverUrl}`,
       err instanceof Error ? err.message : 'Check your network connection and try again.',
     );
+    inspector?.stop();
     process.exit(1);
   }
 
@@ -83,12 +100,11 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
       name: options.name,
       domain: options.domain,
     });
-    tunnelSpinner.stop(); // stop without message - banner shows the result
+    tunnelSpinner.stop();
   } catch (err) {
     tunnelSpinner.fail('Failed to create tunnel');
     const message = err instanceof Error ? err.message : String(err);
 
-    // Helpful error messages
     if (message.includes('SUBDOMAIN_TAKEN')) {
       printError(
         `Subdomain "${options.name ?? ''}" is already in use`,
@@ -108,16 +124,26 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
       printError(`Tunnel creation failed: ${message}`);
     }
 
-    client.disconnect();
+    inspector?.stop();
+    void client.disconnect();
     process.exit(1);
   }
 
+  // ─── Update inspector state ──────────────────────────────
+  inspector?.setState({
+    tunnelInfo: tunnel,
+    mode: 'http',
+    localPort: port,
+    email: cliConfig.email ?? null,
+  });
+
   // ─── Print banner ────────────────────────────────────────
-  printBanner(tunnel);
+  printBanner(tunnel, inspector ? 'http://localhost:4040' : null);
 
   // ─── Event handlers ──────────────────────────────────────
   client.on('request:complete', (req: CapturedRequest) => {
     printRequest(req);
+    inspector?.pushRequest(req);
   });
 
   client.on('request:error', (_requestId: string, error: string) => {
@@ -137,17 +163,17 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
       'Could not reconnect to relay server',
       'Check your network connection. The tunnel has been stopped.',
     );
+    inspector?.stop();
     process.exit(1);
   });
 
   client.on('error', (err: Error) => {
-    // Don't print every error - some are handled by specific handlers above
     logger.debug('Client error', { err: err.message });
   });
 
   // ─── Graceful shutdown ───────────────────────────────────
-  const shutdown = (): Promise<void> => {
-    console.log(); // newline after ^C
+  const shutdown = (): void => {
+    console.log();
 
     const stopSpinner = ora({
       text: 'Stopping tunnel...',
@@ -155,7 +181,8 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
     }).start();
 
     try {
-      client.disconnect();
+      inspector?.stop();
+      void client.disconnect();
       stopSpinner.stop();
 
       const uptime = Date.now() - startTime;
@@ -167,6 +194,6 @@ export async function httpCommand(portStr: string, options: HttpCommandOptions):
     process.exit(0);
   };
 
-  process.on('SIGINT', () => void shutdown());
-  process.on('SIGTERM', () => void shutdown());
+  process.on('SIGINT', () => shutdown());
+  process.on('SIGTERM', () => shutdown());
 }
