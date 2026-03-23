@@ -9,7 +9,7 @@ export async function routeToDO(
   domain: string,
 ): Promise<Response> {
   const tunnelRate = RATE_LIMITS.tunnel(subdomain, domain);
-  const tunnelResult = await checkRateLimit(
+  const tunnelResult = checkRateLimit(
     env,
     tunnelRate.scope,
     tunnelRate.limit,
@@ -22,7 +22,7 @@ export async function routeToDO(
 
   const clientIp = request.headers.get('CF-Connecting-IP') ?? 'unknown';
   const ipRate = RATE_LIMITS.anonymousIp(clientIp);
-  const ipResult = await checkRateLimit(env, ipRate.scope, ipRate.limit, ipRate.windowSeconds);
+  const ipResult = checkRateLimit(env, ipRate.scope, ipRate.limit, ipRate.windowSeconds);
 
   if (!ipResult.allowed) {
     return error('RATE_LIMITED', 'IP rate limit exceeded (200 requests/minute)', 429);

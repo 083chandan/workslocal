@@ -1,3 +1,5 @@
+import { base64ToUint8Array, uint8ArrayToBase64 } from '../utils/encoding.js';
+
 import type { TunnelContext, WireWsClose, WireWsFrame } from './types.js';
 import { log } from './types.js';
 
@@ -94,21 +96,10 @@ export function handleUserWebSocket(ctx: TunnelContext, request: Request): Respo
     if (typeof data === 'string') {
       // Text frame: base64-encode the UTF-8 string
       const encoder = new TextEncoder();
-      const bytes = encoder.encode(data);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]!);
-      }
-      base64Data = btoa(binary);
+      base64Data = uint8ArrayToBase64(encoder.encode(data));
       isBinary = false;
     } else if (data instanceof ArrayBuffer) {
-      // Binary frame: base64-encode the raw bytes
-      const bytes = new Uint8Array(data);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]!);
-      }
-      base64Data = btoa(binary);
+      base64Data = uint8ArrayToBase64(new Uint8Array(data));
       isBinary = true;
     } else {
       return;
@@ -184,12 +175,7 @@ export function handleWsFrame(ctx: TunnelContext, msg: WireWsFrame): void {
 
   try {
     if (msg.is_binary) {
-      const binary = atob(msg.data);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      userSocket.send(bytes.buffer);
+      userSocket.send(base64ToUint8Array(msg.data));
     } else {
       userSocket.send(atob(msg.data));
     }

@@ -7,47 +7,60 @@ interface RateLimitResult {
 }
 
 /**
- * KV-based sliding window rate limiter.
+ * In-memory sliding window rate limiter.
  *
- * Uses KV keys with TTL for automatic cleanup.
- * Each window is a separate KV key with an atomic counter.
+ * Uses a Map with automatic window rotation.
+ * Counters reset on Worker cold start — acceptable for rate limiting
+ * since the goal is abuse prevention, not precise accounting.
+ *
+ * Why not KV: KV.put on every request hits the 1,000 writes/day
+ * free tier limit instantly on heavy-asset pages (Angular/React dev servers).
  *
  * Rates:
  * - Per tunnel: 1,000 requests/hour
  * - Per IP (anonymous): 200 requests/minute
  * - Per user (authenticated): 5,000 requests/hour
  */
-export async function checkRateLimit(
-  env: Env,
+
+const counters = new Map<string, { count: number; resetAt: number }>();
+
+export function checkRateLimit(
+  _env: Env,
   scope: string,
   limit: number,
   windowSeconds: number,
-): Promise<RateLimitResult> {
+): RateLimitResult {
   const now = Math.floor(Date.now() / 1000);
-  const window = Math.floor(now / windowSeconds);
-  const kvKey = `rate:${scope}:${window}`;
+  const windowEnd = (Math.floor(now / windowSeconds) + 1) * windowSeconds;
+  const key = `rate:${scope}`;
 
-  // Read current count
-  const currentStr = await env.KV.get(kvKey);
-  const current = currentStr ? parseInt(currentStr, 10) : 0;
+  const entry = counters.get(key);
 
-  if (current >= limit) {
+  // Window expired or first request — reset counter
+  if (!entry || now >= entry.resetAt) {
+    counters.set(key, { count: 1, resetAt: windowEnd });
     return {
-      allowed: false,
-      remaining: 0,
-      resetAt: (window + 1) * windowSeconds,
+      allowed: true,
+      remaining: limit - 1,
+      resetAt: windowEnd,
     };
   }
 
-  // Increment (not truly atomic - but KV is eventually consistent anyway)
-  await env.KV.put(kvKey, String(current + 1), {
-    expirationTtl: windowSeconds * 2, // 2x window for safety
-  });
+  // Over limit
+  if (entry.count >= limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: entry.resetAt,
+    };
+  }
 
+  // Increment
+  entry.count++;
   return {
     allowed: true,
-    remaining: limit - current - 1,
-    resetAt: (window + 1) * windowSeconds,
+    remaining: limit - entry.count,
+    resetAt: entry.resetAt,
   };
 }
 

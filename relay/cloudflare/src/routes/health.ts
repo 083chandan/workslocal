@@ -15,7 +15,7 @@ export async function handleHealthReady(_request: Request, env: Env): Promise<Re
     const dbOk = domains.length > 0;
 
     const kvTestKey = '__health_check__';
-    await env.KV.put(kvTestKey, 'ok', { expirationTtl: 60 });
+    await env.KV.get('health:ping');
     const kvValue = await env.KV.get(kvTestKey);
     const kvOk = kvValue === 'ok';
 
