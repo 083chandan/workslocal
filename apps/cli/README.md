@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/workslocal"><img src="https://img.shields.io/npm/v/workslocal" /></a>
-  <a href="https://github.com/workslocal/workslocal/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" /></a>
+  <a href="https://github.com/083chandan/workslocal/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" /></a>
 </p>
 
 ## Quick Start

@@ -5,7 +5,7 @@
   "description": "WorksLocal shared types, schemas, constants, and utilities",
   "repository": {
     "type": "git",
-    "url": "https://github.com/workslocal/workslocal",
+    "url": "https://github.com/083chandan/workslocal",
     "directory": "packages/shared"
   },
   "license": "MIT",

@@ -48,4 +48,4 @@ Prefixes: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `style:`, `c
 
 ## Questions?
 
-Open a [Discussion](https://github.com/workslocal/workslocal/discussions).
+Open a [Discussion](https://github.com/083chandan/workslocal/discussions).

@@ -14,11 +14,11 @@
   ],
   "homepage": "https://workslocal.dev",
   "bugs": {
-    "url": "https://github.com/workslocal/workslocal/issues"
+    "url": "https://github.com/083chandan/workslocal/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/workslocal/workslocal.git"
+    "url": "git+https://github.com/083chandan/workslocal.git"
   },
   "license": "MIT",
   "author": "WorksLocal Contributors",
@@ -39,7 +39,7 @@
     "lint": "turbo run lint",
     "prepare": "husky",
     "relay:tail": "pnpm --filter @workslocal/relay exec wrangler tail",
-    "release": "turbo run build && changeset publish",
+    "release": "pnpm turbo run build --force && pnpm changeset publish",
     "typecheck": "turbo run typecheck",
     "version-packages": "changeset version"
   },
