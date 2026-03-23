@@ -1,7 +1,7 @@
 {
   "name": "@workslocal/shared",
-  "version": "0.0.1",
-  "description": "Shared types, Zod schemas, constants, and utilities for WorksLocal",
+  "version": "0.1.0",
+  "description": "WorksLocal shared types, schemas, constants, and utilities",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -28,5 +28,10 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/workslocal/workslocal",
+    "directory": "packages/shared"
+  },
   "license": "MIT"
 }

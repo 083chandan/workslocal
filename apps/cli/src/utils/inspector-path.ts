@@ -5,16 +5,14 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/**
- * Resolve the path to the inspector's built dist/ directory.
- * Tries multiple locations relative to the CLI's dist.
- */
 export function getInspectorDistPath(): string | null {
   const candidates = [
-    // Development: relative to repo root
-    path.resolve(__dirname, '../../../inspector/dist'),
-    // npm installed: next to cli in node_modules
+    // Bundled with CLI (npm installed or production build)
+    path.resolve(__dirname, 'inspector'),
+    // Development: running from apps/cli/dist/
     path.resolve(__dirname, '../../inspector/dist'),
+    // Development: running from apps/cli/src/ (tsx)
+    path.resolve(__dirname, '../../../inspector/dist'),
   ];
 
   for (const candidate of candidates) {

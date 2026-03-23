@@ -1,114 +1,123 @@
-# WorksLocal
+<p align="center">
+  <img src="apps/inspector/public/logo-dark.svg" width="80" />
+</p>
 
-> Free, open-source tunneling - expose localhost to the internet via secure HTTPS tunnels.
+<h1 align="center">WorksLocal</h1>
+<p align="center">
+  <em>Free, open-source localhost tunneling. It works on my local.</em>
+</p>
 
-[![CI](https://github.com/workslocal/workslocal/actions/workflows/ci.yml/badge.svg)](https://github.com/workslocal/workslocal/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-**"It works on my local."**
-
-WorksLocal is a free alternative to ngrok. It creates secure HTTPS tunnels so you can share your local development server with anyone on the internet. Desktop app, CLI, REST API, and first-class AI integration included.
-
-## Features
-
-- **HTTPS tunnels** - Expose `localhost` via `https://myapp.workslocal.exposed`
-- **Multiple domains** - Choose from `.exposed`, `.io`, or `.run`
-- **Desktop app** - Dark-mode GUI with real-time request monitoring (macOS + Windows)
-- **CLI tool** - `workslocal http 3000` and you're live
-- **REST API** - Programmatic tunnel management
-- **AI integration** - MCP server for Claude, TypeScript SDK, OpenAPI spec
-- **Free & open source** - MIT licensed, forever free
+<p align="center">
+  <a href="https://www.npmjs.com/package/workslocal"><img src="https://img.shields.io/npm/v/workslocal" /></a>
+  <a href="https://github.com/workslocal/workslocal/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" /></a>
+</p>
 
 ## Quick Start
 
 ```bash
-git clone git@github.com:workslocal/workslocal.git
-cd workslocal
-./scripts/setup.sh
+npx workslocal http 3000
 ```
 
-### Common Commands
+That's it. Your localhost:3000 is now live at `https://xyz.workslocal.exposed`.
+
+## Install
 
 ```bash
-pnpm build          # Build all (via Turborepo)
-pnpm typecheck      # Type-check all packages
-pnpm lint           # ESLint all packages
-pnpm test           # Vitest all packages
-pnpm format         # Prettier format all
-pnpm changeset      # Create a changeset for versioning
+npm install -g workslocal
 ```
 
-## Tech Stack
+## Features
 
-| Layer               | Technology                               |
-| ------------------- | ---------------------------------------- |
-| Package Manager     | pnpm 9+                                  |
-| Build Orchestration | Turborepo                                |
-| Library Builds      | tsup (dual CJS/ESM)                      |
-| Testing             | Vitest                                   |
-| Auth                | Clerk                                    |
-| Database            | Neon DB (serverless PostgreSQL) + Prisma |
-| Cache               | Redis                                    |
-| Deployment          | Coolify on Hetzner VPS                   |
-| Portal Hosting      | Vercel                                   |
-| DNS/CDN             | Cloudflare                               |
-| Versioning          | Changesets                               |
-
-## Links
-
-- **Website:** [workslocal.dev](https://workslocal.dev)
-- **Docs:** [workslocal.dev/docs](https://workslocal.dev/docs)
-- **API:** [api.workslocal.dev](https://api.workslocal.dev)
-
-## How It Works End-to-End
+### Tunnel any local server
+```bash
+workslocal http 3000
+# ✔ Tunnel is live!
+# Public URL: https://myapp.workslocal.exposed
+# Inspector:  http://localhost:4040
 ```
-Browser/curl                    Relay Server                     CLI/Client
-     |                              |                                |
-     |  GET myapp.workslocal.exposed/api/users                       |
-     |  Host: myapp.workslocal.exposed                               |
-     | ---------------------------→ |                                |
-     |                              |                                |
-     |              1. Extract subdomain from Host header            |
-     |              2. Look up wl:tunnel:workslocal.exposed:myapp    |
-     |                 in Redis → get connectionId                   |
-     |              3. Serialize HTTP request                        |
-     |              4. Generate requestId                            |
-     |              5. Create pending request Promise                |
-     |                              |                                |
-     |                              |  WS: http_request              |
-     |                              | -----------------------------→ |
-     |                              |                                |
-     |                              |       6. Forward to localhost  |
-     |                              |       7. Capture response      |
-     |                              |                                |
-     |                              |  WS: http_response             |
-     |                              | ←----------------------------- |
-     |                              |                                |
-     |              8. Match requestId to pending Promise            |
-     |              9. Relay response (status, headers, body)        |
-     |             10. Log request (fire-and-forget)                 |
-     |                              |                                |
-     |  HTTP 200 { "users": [...] } |                                |
-     | ←--------------------------- |                                |
+
+### Catch webhooks without code
+```bash
+workslocal catch --name stripe
+# Paste URL in Stripe dashboard
+# All payloads appear in your terminal + inspector
 ```
+
+### Inspect every request
+Open `localhost:4040` — dark/light theme, JSON formatting, copy as cURL, filters.
+
+[screenshot of inspector here]
+
+### Persistent subdomains (free)
+```bash
+workslocal login          # One-time GitHub auth
+workslocal http 3000 --name myapp
+# https://myapp.workslocal.exposed — same URL every time
+```
+
+### WebSocket passthrough
+Socket.io, ws, WebRTC signaling — all work through the tunnel.
+
+## Why WorksLocal?
+
+| Feature | WorksLocal | ngrok (free) | Cloudflare Tunnel |
+|---------|-----------|-------------|-------------------|
+| Price | Free forever | Free (1GB/month, 1 endpoint) | Free |
+| Custom subdomain | ✅ Free, you choose | ❌ Auto-assigned only | N/A (uses your domain) |
+| Persistent URL | ✅ Survives restart | ✅ 1 free dev domain | ✅ |
+| Catch mode | ✅ | ❌ | ❌ |
+| Web inspector | ✅ Dark/light, filters, cURL | ✅ localhost:4040 + replay | ❌ |
+| Open source | ✅ MIT | ❌ Proprietary | ❌ (client is open, infra isn't) |
+| No account required | ✅ First use anonymous | ❌ Account required | ❌ Account required |
+| WebSocket passthrough | ✅ | ✅ | ✅ |
+| Request replay | 🔜 Planned | ✅ | ❌ |
+| Self-hostable | 🔜 Planned | ❌ | ✅ You run `cloudflared` |
+| Setup complexity | `npm install -g` | Download binary + auth | Install cloudflared + configure |
+| Interstitial warning | ❌ None | ✅ On free HTML traffic | ❌ None |
+| Bandwidth limit | Unlimited | 1 GB/month | Unlimited |
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `workslocal http <port>` | Tunnel localhost to a public URL |
+| `workslocal catch` | Capture webhooks (no local server needed) |
+| `workslocal login` | Authenticate with GitHub |
+| `workslocal logout` | Sign out |
+| `workslocal whoami` | Show current user |
+| `workslocal list` | List persistent subdomains |
+
+## Options
+
+```
+workslocal http <port> [options]
+  -n, --name <subdomain>   Custom subdomain
+  -d, --domain <domain>    Tunnel domain (default: workslocal.exposed)
+  --server <url>           Custom relay server URL
+  -v, --verbose            Verbose logging
+
+workslocal catch [options]
+  -n, --name <subdomain>   Custom subdomain
+  -s, --status <code>      Response status code (default: 200)
+  -b, --body <json>        Response body (default: {"ok":true})
+```
+
+## How It Works
+
+```
+Your machine                  Cloudflare Edge              Internet
+┌───────────┐    WebSocket   ┌───────────┐    HTTPS     ┌──────────┐
+│ localhost │◄──────────────►│  Worker   │◄────────────►│ Browser  │
+│   :3000   │                │ + Durable │              │  / curl  │
+│           │                │  Object   │              │          │
+└───────────┘                └───────────┘              └──────────┘
+     CLI                       $0/month                  Public URL
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT - see [LICENSE](LICENSE) for details.
-
-```
-
-**Key decisions:**
-
-- **`depends_on` with `condition: service_healthy`:** The relay server doesn't start until Redis reports healthy. This prevents the server from crashing on startup because Redis isn't ready yet.
-
-- **Redis health check:** Pings Redis every 10 seconds. Uses the password so it actually authenticates.
-
-- **Custom network:** Both services on the same `workslocal` bridge network. Redis is not exposed to the host - only the relay server can reach it via the Docker DNS name `redis`.
-
-- **`REDIS_PASSWORD` from env:** Set this in your `.env.production` file. The docker-compose reads it for the Redis command, and your server reads `REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379` from the env file.
-
----
+MIT — see [LICENSE](LICENSE).

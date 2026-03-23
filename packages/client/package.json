@@ -1,7 +1,7 @@
 {
   "name": "@workslocal/client",
-  "version": "0.0.1",
-  "description": "WorksLocal tunnel client - WebSocket, local proxy, request capture",
+  "version": "0.1.0",
+  "description": "WorksLocal tunnel client — WebSocket, local proxy, request capture",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -31,5 +31,10 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/workslocal/workslocal",
+    "directory": "packages/client"
+  },
   "license": "MIT"
 }

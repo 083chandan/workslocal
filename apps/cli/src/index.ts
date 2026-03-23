@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { Command } from 'commander';
 
 import { catchCommand } from './commands/catch.js';
@@ -7,7 +8,7 @@ import { loginCommand } from './commands/login.js';
 import { logoutCommand } from './commands/logout.js';
 import { statusCommand } from './commands/status.js';
 import { stopCommand } from './commands/stop.js';
-import { versionCommand } from './commands/version.js';
+import { getVersion, versionCommand } from './commands/version.js';
 import { whoamiCommand } from './commands/whoami.js';
 import { printError } from './lib/display.js';
 
@@ -15,8 +16,8 @@ const program = new Command();
 
 program
   .name('workslocal')
-  .description('Expose localhost to the internet - free, open-source tunneling tool')
-  .version('0.0.1', '-v, --version', 'Print version');
+  .description('Free, open-source localhost tunneling. It works on my local.')
+  .version(getVersion(), '-v, --version');
 
 // ─── workslocal http <port> ──────────────────────────────
 program
@@ -35,6 +36,36 @@ program
       verbose: options['verbose'] as boolean | undefined,
     });
   });
+
+// ─── workslocal catch ──────────────────────────────────
+program
+  .command('catch')
+  .description('Capture requests without a local server (webhook debugging)')
+  .option('-n, --name <subdomain>', 'Custom subdomain')
+  .option('-d, --domain <domain>', 'Tunnel domain')
+  .option('-s, --status <code>', 'Response status code', '200')
+  .option('-b, --body <json>', 'Response body', '{"ok":true}')
+  .option('--server <url>', 'Override relay server URL')
+  .option('-v, --verbose', 'Verbose logging')
+  .action(catchCommand);
+
+// ─── workslocal login ───────────────────────────────────
+program
+  .command('login')
+  .description('Authenticate with GitHub via WorksLocal')
+  .action(loginCommand);
+
+// ─── workslocal logout ──────────────────────────────────
+program
+  .command('logout')
+  .description('Sign out and clear stored credentials')
+  .action(logoutCommand);
+
+// ─── workslocal whoami ──────────────────────────────────
+program.command('whoami').description('Show current authenticated user').action(whoamiCommand);
+
+// ─── workslocal list ──────────────────────────────────
+program.command('list').description('List your persistent subdomains').action(listCommand);
 
 // ─── workslocal status ──────────────────────────────────
 program
@@ -69,38 +100,23 @@ program
     versionCommand();
   });
 
-// ─── workslocal login ───────────────────────────────────
-program
-  .command('login')
-  .description('Authenticate with GitHub via WorksLocal')
-  .action(loginCommand);
-
-// ─── workslocal logout ──────────────────────────────────
-program
-  .command('logout')
-  .description('Sign out and clear stored credentials')
-  .action(logoutCommand);
-
-// ─── workslocal whoami ──────────────────────────────────
-program.command('whoami').description('Show current authenticated user').action(whoamiCommand);
-
-// ─── workslocal catch ──────────────────────────────────
-program
-  .command('catch')
-  .description('Capture requests without a local server (webhook debugging)')
-  .option('-n, --name <subdomain>', 'Custom subdomain')
-  .option('-d, --domain <domain>', 'Tunnel domain')
-  .option('-s, --status <code>', 'Response status code', '200')
-  .option('-b, --body <json>', 'Response body', '{"ok":true}')
-  .option('--server <url>', 'Override relay server URL')
-  .option('-v, --verbose', 'Verbose logging')
-  .action(catchCommand);
-
-// ─── workslocal list ──────────────────────────────────
-program.command('list').description('List your persistent subdomains').action(listCommand);
-
 // ─── Parse and run ──────────────────────────────────────
-program.parseAsync(process.argv).catch((err: unknown) => {
-  printError(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
-  process.exit(1);
-});
+if (process.argv.length <= 2) {
+  // No args — show friendly welcome instead of generic help
+  const version = getVersion();
+  console.log();
+  console.log(`  ${chalk.bold('WorksLocal')} ${chalk.dim(`v${version}`)}`);
+  console.log();
+  console.log(`  ${chalk.dim('Free, open-source localhost tunneling.')}`);
+  console.log();
+  console.log(`  ${chalk.cyan('workslocal http 3000')}       Tunnel localhost:3000`);
+  console.log(`  ${chalk.cyan('workslocal catch')}           Capture webhooks`);
+  console.log(`  ${chalk.cyan('workslocal login')}           Sign in with GitHub`);
+  console.log(`  ${chalk.cyan('workslocal --help')}          All commands`);
+  console.log();
+} else {
+  program.parseAsync(process.argv).catch((err: unknown) => {
+    printError(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
+    process.exit(1);
+  });
+}
