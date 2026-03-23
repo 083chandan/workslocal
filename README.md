@@ -60,24 +60,17 @@ Socket.io, ws, WebRTC signaling — all work through the tunnel.
 
 ## Why WorksLocal?
 
-| Feature | WorksLocal | ngrok (free) | Cloudflare Tunnel |
-|---------|-----------|-------------|-------------------|
-| Price | Free forever | Free (limited) | Free |
-| Bandwidth | No cap | 1 GB/month | No cap (fair-use TOS) |
-| Request limit | Rate-limited per tunnel | 20K/month | No published limit |
-| Custom subdomain | ✅ You choose, free | ❌ Auto-assigned only | Requires your own domain |
-| Persistent URL | ✅ Survives restart | ✅ 1 dev domain | ✅ Named tunnels |
-| Catch mode | ✅ Webhook capture, no server needed | ❌ | ❌ |
-| Web inspector | ✅ localhost:4040 | ✅ localhost:4040 + replay | ❌ Metrics/logs only |
-| Request replay | Planned | ✅ With modifications | ❌ |
-| Open source | ✅ MIT | ❌ Proprietary | Client only (Apache 2.0) |
-| No account required | ✅ Anonymous first use | ❌ Required since Dec 2023 | ❌ (except quick tunnels) |
-| WebSocket passthrough | ✅ | ✅ | ✅ |
-| Interstitial warning | ❌ None | ✅ On all browser traffic | ❌ None |
-| Self-hostable | Planned | ❌ | Client local, infra is Cloudflare's |
-| Setup | `npm install -g workslocal` | Download binary + account | Install cloudflared + domain + config |
-| Endpoints | 5 persistent (auth) | 3 concurrent | 1,000 tunnels |
-| DDoS protection | Via Cloudflare edge | ❌ Free tier | ✅ Full Cloudflare |
+|  | WorksLocal | ngrok (free) | Cloudflare Tunnel |
+|--|-----------|-------------|-------------------|
+| **Install** | `npm i -g workslocal` | Download binary + sign up | Install cloudflared + add domain + config |
+| **Cost** | Free, no limits | Free — 1 GB/month, 20K requests | Free |
+| **Account needed?** | No | Yes | Yes (except quick tunnels) |
+| **Custom subdomains** | Free, you pick | Paid only | Bring your own domain |
+| **Catch mode** | Yes | — | — |
+| **Request inspector** | Yes | yes | — |
+| **Open source** | MIT | No | Client only |
+| **Interstitial page** | None | Shows warning on free | None |
+| **WebSocket** | Yes | Yes | Yes |
 
 > **Honest note:** ngrok's inspector has request replay with modifications — we don't (yet).
 > Cloudflare Tunnel offers quick tunnels (`cloudflared tunnel --url`) with no account needed,
