@@ -1,6 +1,7 @@
 {
   "name": "@workslocal/client",
   "version": "0.1.0",
+  "private": true,
   "description": "WorksLocal tunnel client — WebSocket, local proxy, request capture",
   "repository": {
     "type": "git",

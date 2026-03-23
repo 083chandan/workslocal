@@ -7,5 +7,10 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@workslocal/relay", "@workslocal/inspector"]
+  "ignore": [
+    "@workslocal/relay",
+    "@workslocal/inspector",
+    "@workslocal/shared",
+    "@workslocal/client"
+  ]
 }

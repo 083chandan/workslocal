@@ -1,6 +1,7 @@
 {
   "name": "@workslocal/shared",
   "version": "0.1.0",
+  "private": true,
   "description": "WorksLocal shared types, schemas, constants, and utilities",
   "repository": {
     "type": "git",
