@@ -112,7 +112,7 @@ export function printConnecting(): void {
 }
 
 export function printDisconnected(code: number, reason: string): void {
-  console.log(`\n  ${chalk.yellow('⚡')} Disconnected: ${String(code)} ${reason}`);
+  console.log(`\n${chalk.yellow('⚡')} Disconnected: ${String(code)} ${reason}`);
 }
 
 // ─── Status table ────────────────────────────────────────
@@ -131,6 +131,62 @@ export function printTunnelList(tunnels: readonly TunnelInfo[]): void {
     console.log(`${chalk.gray('ID:')} ${tunnel.tunnelId}`);
     console.log();
   }
+}
+
+// ─── Warning display ────────────────────────────────────
+
+export function printWarning(message: string, hint?: string): void {
+  console.log(`${chalk.yellow('⚠')} ${chalk.yellow(message)}`);
+  if (hint) {
+    console.log(`  ${chalk.gray(hint)}`);
+  }
+}
+
+// ─── Success display ────────────────────────────────────
+
+export function printSuccess(message: string): void {
+  console.log(`${chalk.green('✔')} ${chalk.green(message)}`);
+}
+
+// ─── Catch mode banner ──────────────────────────────────
+
+interface CatchBannerOptions {
+  publicUrl: string;
+  inspectorUrl: string | null;
+  statusCode: number;
+  responseBody: string;
+  subdomain: string;
+  isPersistent: boolean;
+}
+
+export function printCatchBanner(opts: CatchBannerOptions): void {
+  const line = chalk.gray('─'.repeat(60));
+
+  console.log();
+  console.log(line);
+  console.log();
+  console.log(`${chalk.bold.green('✔')} ${chalk.bold('Catch mode active!')}`);
+  console.log();
+  console.log(`${chalk.gray('Public URL:')}   ${chalk.bold.cyan(opts.publicUrl)}`);
+  if (opts.inspectorUrl) {
+    console.log(`${chalk.gray('Inspector:')}    ${chalk.cyan(opts.inspectorUrl)}`);
+  }
+  console.log(
+    `${chalk.gray('Returning:')}    ${chalk.yellow(`${String(opts.statusCode)} ${opts.responseBody.slice(0, 50)}`)}`,
+  );
+  console.log(
+    `${chalk.gray('Subdomain:')}    ${chalk.white(opts.subdomain)}${opts.isPersistent ? chalk.dim(' (persistent)') : ''}`,
+  );
+  console.log();
+  console.log(`${chalk.gray('Paste the URL in your webhook dashboard.')}`);
+  console.log(
+    `${chalk.gray('All requests appear below')}${opts.inspectorUrl ? chalk.gray(` and at ${opts.inspectorUrl}`) : chalk.gray('.')}`,
+  );
+  console.log();
+  console.log(`${chalk.gray('Press')} ${chalk.white('Ctrl+C')} ${chalk.gray('to stop.')}`);
+  console.log();
+  console.log(line);
+  console.log();
 }
 
 // ─── Helpers ─────────────────────────────────────────────

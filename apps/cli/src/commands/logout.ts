@@ -1,13 +1,12 @@
-import chalk from 'chalk';
-
 import { getHttpBaseUrl } from '../lib/api.js';
+import { printSuccess, printWarning } from '../lib/display.js';
 import { CliConfig, readConfig, writeConfig } from '../utils/config.js';
 
 export async function logoutCommand(): Promise<void> {
   const config = readConfig();
 
   if (!config.sessionToken || !config.apiKeyId) {
-    console.log(chalk.yellow('Not logged in.'));
+    printWarning('Not logged in.');
     return;
   }
 
@@ -29,5 +28,5 @@ export async function logoutCommand(): Promise<void> {
   }
   writeConfig(cleared);
 
-  console.log(chalk.green('Logged out successfully.'));
+  printSuccess('Logged out successfully.');
 }

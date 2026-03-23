@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 
 import { getHttpBaseUrl } from '../lib/api.js';
+import { printWarning } from '../lib/display.js';
 import { readConfig, writeConfig } from '../utils/config.js';
 
 // ─── Auth result from browser callback ───────────────────
@@ -28,7 +29,7 @@ export async function loginCommand(): Promise<void> {
   const config = readConfig();
 
   if (config.sessionToken) {
-    console.log(chalk.yellow('Already logged in. Run "workslocal logout" to sign out first.'));
+    printWarning('Already logged in.', 'Run "workslocal logout" to sign out first.');
     return;
   }
 

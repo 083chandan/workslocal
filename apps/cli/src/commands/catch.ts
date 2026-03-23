@@ -4,9 +4,16 @@ import {
   createCatchProxy,
   createInspectorServer,
 } from '@workslocal/client';
-import chalk from 'chalk';
 import ora from 'ora';
 
+import {
+  printCatchBanner,
+  printDisconnected,
+  printError,
+  printReconnecting,
+  printRequest,
+  printSummary,
+} from '../lib/display.js';
 import { createCliLogger } from '../lib/logger.js';
 import { getServerUrl, readConfig } from '../utils/config.js';
 import { getInspectorDistPath } from '../utils/inspector-path.js';
@@ -90,59 +97,36 @@ export async function catchCommand(options: CatchOptions): Promise<void> {
       email: config.email ?? null,
     });
 
-    console.log('');
-    console.log('──────────────────────────────────────────────────────────────');
-    console.log(`  ${chalk.green('✔')} Catch mode active!`);
-    console.log('');
-    console.log(`  Public URL:   ${chalk.cyan(tunnel.publicUrl)}`);
-    if (inspector) {
-      console.log(`  Inspector:    ${chalk.cyan('http://localhost:4040')}`);
-    }
-    console.log(
-      `  Returning:    ${chalk.yellow(`${String(statusCode)} ${responseBody.slice(0, 50)}`)}`,
-    );
-    console.log(
-      `  Subdomain:    ${tunnel.subdomain}${tunnel.isPersistent ? chalk.dim(' (persistent)') : ''}`,
-    );
-    console.log('');
-    console.log('  Paste the URL in your webhook dashboard.');
-    console.log('  All requests appear below and at localhost:4040.');
-    console.log('');
-    console.log('  Press Ctrl+C to stop.');
-    console.log('──────────────────────────────────────────────────────────────');
-    console.log('');
+    printCatchBanner({
+      publicUrl: tunnel.publicUrl,
+      inspectorUrl: inspector ? 'http://localhost:4040' : null,
+      statusCode,
+      responseBody,
+      subdomain: tunnel.subdomain,
+      isPersistent: tunnel.isPersistent,
+    });
   });
 
   client.on('request:complete', (captured) => {
     requestCount++;
-
-    const statusColor =
-      captured.responseStatusCode < 400
-        ? chalk.green(String(captured.responseStatusCode))
-        : chalk.red(String(captured.responseStatusCode));
-
-    const method = captured.method.padEnd(6);
-    console.log(
-      `  ${chalk.bold(method)} ${captured.path} → ${statusColor} ${chalk.dim(`(${String(captured.responseTimeMs)}ms)`)}`,
-    );
-
+    printRequest(captured);
     inspector?.pushRequest(captured);
   });
 
   client.on('request:error', (_requestId: string, error: string) => {
-    console.error(chalk.red(`  ✖ Request failed: ${error}`));
+    printError(`Request failed: ${error}`);
   });
 
   client.on('disconnected', (code: number, reason: string) => {
-    console.log(chalk.yellow(`  ⚡ Disconnected: ${String(code)} ${reason}`));
+    printDisconnected(code, reason);
   });
 
   client.on('reconnecting', (attempt: number, maxAttempts: number) => {
-    console.log(chalk.yellow(`  🔄 Reconnecting... (${String(attempt)}/${String(maxAttempts)})`));
+    printReconnecting(attempt, maxAttempts);
   });
 
   client.on('reconnect_failed', () => {
-    console.error(chalk.red('  ✖ Could not reconnect to relay server'));
+    printError('Could not reconnect to relay server', 'Check your network connection.');
     inspector?.stop();
     process.exit(1);
   });
@@ -159,9 +143,7 @@ export async function catchCommand(options: CatchOptions): Promise<void> {
       domain: options.domain,
     });
   } catch (err) {
-    console.error(
-      chalk.red(`  ✖ Failed to create tunnel: ${err instanceof Error ? err.message : String(err)}`),
-    );
+    printError(`Failed to create tunnel: ${err instanceof Error ? err.message : String(err)}`);
     inspector?.stop();
     client.disconnect();
     process.exit(1);
@@ -169,17 +151,7 @@ export async function catchCommand(options: CatchOptions): Promise<void> {
 
   // ─── Graceful shutdown ───────────────────────────────────
   const shutdown = (): void => {
-    const uptime = Math.floor((Date.now() - startTime) / 1000);
-    const minutes = Math.floor(uptime / 60);
-    const seconds = uptime % 60;
-
-    console.log('');
-    console.log('──────────────────────────────────────────────────────────────');
-    console.log('  Session summary:');
-    console.log(`  Requests captured: ${String(requestCount)}`);
-    console.log(`  Uptime:            ${String(minutes)}m ${String(seconds)}s`);
-    console.log('──────────────────────────────────────────────────────────────');
-
+    printSummary(requestCount, Date.now() - startTime);
     inspector?.stop();
     client.disconnect();
     process.exit(0);

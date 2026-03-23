@@ -1,6 +1,4 @@
-import chalk from 'chalk';
-
-import { printError } from '../lib/display.js';
+import { printError, printWarning } from '../lib/display.js';
 
 interface StopCommandOptions {
   all?: boolean | undefined;
@@ -27,7 +25,8 @@ export function stopCommand(name: string | undefined, options: StopCommandOption
 
   // : No API to stop tunnels remotely
   // : DELETE /api/v1/tunnels/:name or DELETE /api/v1/tunnels?all=true
-  console.log(chalk.yellow('Remote tunnel management requires authentication (coming in v0.2)'));
-  console.log(chalk.gray('For now, press Ctrl+C in the running tunnel session to stop it.'));
-  console.log();
+  printWarning(
+    'Remote tunnel management requires authentication (coming in v0.2)',
+    'For now, press Ctrl+C in the running tunnel session to stop it.',
+  );
 }

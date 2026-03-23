@@ -9,6 +9,7 @@ import { statusCommand } from './commands/status.js';
 import { stopCommand } from './commands/stop.js';
 import { versionCommand } from './commands/version.js';
 import { whoamiCommand } from './commands/whoami.js';
+import { printError } from './lib/display.js';
 
 const program = new Command();
 
@@ -100,6 +101,6 @@ program.command('list').description('List your persistent subdomains').action(li
 
 // ─── Parse and run ──────────────────────────────────────
 program.parseAsync(process.argv).catch((err: unknown) => {
-  console.error('Fatal error:', err instanceof Error ? err.message : String(err));
+  printError(`Fatal error: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 });

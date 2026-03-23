@@ -1,13 +1,14 @@
 import chalk from 'chalk';
 
 import { getHttpBaseUrl } from '../lib/api.js';
+import { printError, printWarning } from '../lib/display.js';
 import { readConfig } from '../utils/config.js';
 
 export async function listCommand(): Promise<void> {
   const config = readConfig();
 
   if (!config.sessionToken) {
-    console.log(chalk.yellow('Not logged in. Run "workslocal login" first.'));
+    printWarning('Not logged in.', 'Run "workslocal login" first.');
     return;
   }
 
@@ -18,7 +19,7 @@ export async function listCommand(): Promise<void> {
   });
 
   if (!res.ok) {
-    console.log(chalk.red('Failed to fetch tunnels.'));
+    printError('Failed to fetch tunnels.');
     return;
   }
 
