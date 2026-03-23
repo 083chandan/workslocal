@@ -47,7 +47,7 @@
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@types/node": "^20.x",
+    "@types/node": "^25.x",
     "@workslocal/client": "workspace:*",
     "@workslocal/shared": "workspace:*"
   },
