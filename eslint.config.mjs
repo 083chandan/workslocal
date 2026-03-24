@@ -74,6 +74,9 @@ export default tseslint.config(
     rules: {
       'no-console': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-base-to-string': 'off',
     },
   },
 

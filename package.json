@@ -40,6 +40,9 @@
     "prepare": "husky",
     "relay:tail": "pnpm --filter @workslocal/relay exec wrangler tail",
     "release": "pnpm turbo run build --force && pnpm changeset publish",
+    "test": "turbo run test",
+    "test:integration": "pnpm --filter @workslocal/relay run test:integration",
+    "test:unit": "turbo run test",
     "typecheck": "turbo run typecheck",
     "version-packages": "changeset version"
   },

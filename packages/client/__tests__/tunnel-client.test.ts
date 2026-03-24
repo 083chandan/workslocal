@@ -11,7 +11,7 @@ interface WsMessage {
 }
 
 function parseWsMessage(data: WebSocket.RawData): WsMessage {
-  const text = Buffer.isBuffer(data) ? data.toString('utf-8') : String(data as string);
+  const text = Buffer.isBuffer(data) ? data.toString('utf-8') : String(data as unknown);
   return JSON.parse(text) as WsMessage;
 }
 

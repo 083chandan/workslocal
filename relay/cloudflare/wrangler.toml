@@ -1,9 +1,9 @@
-name = "workslocal-relay"
+name = "workslocal-relay-dev"
 main = "src/index.ts"
 compatibility_date = "2026-03-01"
 compatibility_flags = ["nodejs_compat"]
 
-# ─── Durable Objects ────────────────────────────────────
+# ─── Durable Objects (shared class, separate instances per env) ──
 [durable_objects]
 bindings = [{ name = "TUNNEL", class_name = "TunnelDO" }]
 
@@ -11,36 +11,63 @@ bindings = [{ name = "TUNNEL", class_name = "TunnelDO" }]
 tag = "v1"
 new_sqlite_classes = ["TunnelDO"]
 
-# ─── D1 Database ────────────────────────────────────────
+# ─── D1 Database (dev — local SQLite via wrangler dev) ──────────
 [[d1_databases]]
+binding = "DB"
+database_name = "workslocal-db-dev"
+database_id = "00000000-0000-0000-0000-000000000000"  # Ignored locally
+migrations_dir = "migrations"
+
+# ─── KV Namespace (dev — local file storage via wrangler dev) ───
+[[kv_namespaces]]
+binding = "KV"
+id = "00000000000000000000000000000000"  # Ignored locally
+
+# ─── Environment variables (DEVELOPMENT) ────────────────────────
+[vars]
+TUNNEL_DOMAINS = "workslocal.exposed"
+API_VERSION = "v1"
+ENVIRONMENT = "development"
+CLERK_PUBLISHABLE_KEY = "pk_test_bG92aW5nLXN1bmJpcmQtNzYuY2xlcmsuYWNjb3VudHMuZGV2JA"
+
+# ─── Dev settings ───────────────────────────────────────────────
+[dev]
+port = 8787
+local_protocol = "http"
+
+# ═══════════════════════════════════════════════════════════════
+#  PRODUCTION — wrangler deploy --env production
+# ═══════════════════════════════════════════════════════════════
+
+[env.production]
+name = "workslocal-relay"
+
+[[env.production.d1_databases]]
 binding = "DB"
 database_name = "workslocal-db"
 database_id = "17dc106c-a2e1-45c0-a517-0f3712faff6f"
 migrations_dir = "migrations"
 
-# ─── KV Namespace ───────────────────────────────────────
-[[kv_namespaces]]
+[[env.production.kv_namespaces]]
 binding = "KV"
 id = "9c5ba9765276485fb721a31fc8198fe0"
 
-# ─── Scheduled (Cron) ──────────────────────────────────
-[triggers]
-crons = ["0 2 * * *"] # Daily at 2 AM UTC - stale tunnel cleanup
+[env.production.durable_objects]
+bindings = [{ name = "TUNNEL", class_name = "TunnelDO" }]
 
-# ─── Custom domain routing ──────────────────────────────
-# Added after deploy:
-[[routes]]
+[[env.production.migrations]]
+tag = "v1"
+new_sqlite_classes = ["TunnelDO"]
+
+[env.production.triggers]
+crons = ["0 2 * * *"]
+
+[[env.production.routes]]
 pattern = "*workslocal.exposed/*"
 zone_name = "workslocal.exposed"
 
-# ─── Environment variables (non-secret) ─────────────────
-[vars]
+[env.production.vars]
 TUNNEL_DOMAINS = "workslocal.exposed"
 API_VERSION = "v1"
 ENVIRONMENT = "production"
 CLERK_PUBLISHABLE_KEY = "pk_test_bG92aW5nLXN1bmJpcmQtNzYuY2xlcmsuYWNjb3VudHMuZGV2JA"
-
-# ─── Dev settings ───────────────────────────────────────
-[dev]
-port = 8787
-local_protocol = "http"
