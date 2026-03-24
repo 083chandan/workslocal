@@ -43,3 +43,54 @@ jobs:
         run: pnpm turbo run test
         env:
           NODE_ENV: test
+
+      - name: Check coverage thresholds
+        if: always()
+        run: |
+          node -e "
+            const fs = require('fs');
+            const packages = [
+              'packages/shared',
+              'packages/client',
+              'relay/cloudflare',
+            ];
+            const thresholds = {
+              'packages/shared': { lines: 90, branches: 85, functions: 90 },
+              'packages/client': { lines: 80, branches: 75, functions: 80 },
+              'relay/cloudflare': { lines: 75, branches: 70, functions: 75 },
+            };
+
+            let failed = false;
+            for (const pkg of packages) {
+              const summaryPath = pkg + '/coverage/coverage-summary.json';
+              if (!fs.existsSync(summaryPath)) {
+                console.log('No coverage for ' + pkg);
+                continue;
+              }
+              const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+              const total = summary.total;
+              const thresh = thresholds[pkg];
+
+              for (const [metric, min] of Object.entries(thresh)) {
+                const actual = total[metric].pct;
+                if (actual < min) {
+                  console.error(pkg + ' ' + metric + ': ' + actual + '% < ' + min + '% threshold');
+                  failed = true;
+                } else {
+                  console.log(pkg + ' ' + metric + ': ' + actual + '% >= ' + min + '%');
+                }
+              }
+            }
+
+            if (failed) process.exit(1);
+          "
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            packages/shared/coverage/
+            packages/client/coverage/
+            relay/cloudflare/coverage/

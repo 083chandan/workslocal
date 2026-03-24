@@ -235,4 +235,23 @@ describe('RequestStore', () => {
       expect(store.size).toBe(1);
     });
   });
+
+  describe('eviction edge cases', () => {
+    it('getById returns undefined for evicted request ID', () => {
+      const store = createRequestStore({ maxSize: 2 });
+      store.add(mockRequest('r1'));
+      store.add(mockRequest('r2'));
+      store.add(mockRequest('r3'));
+      expect(store.getById('r1')).toBeUndefined();
+    });
+
+    it('stress: 10000 items into maxSize=100', () => {
+      const store = createRequestStore({ maxSize: 100 });
+      for (let i = 0; i < 10000; i++) {
+        store.add(mockRequest(`r${String(i)}`));
+      }
+      expect(store.size).toBe(100);
+      expect(store.getAll()[0]!.requestId).toBe('r9999');
+    });
+  });
 });

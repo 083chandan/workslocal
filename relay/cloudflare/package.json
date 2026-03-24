@@ -18,6 +18,7 @@
     "dev:scheduled": "wrangler dev --test-scheduled",
     "lint": "eslint src/",
     "tail": "wrangler tail",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "types": "wrangler types"
   },

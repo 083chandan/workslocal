@@ -1,20 +1,19 @@
 import type { HttpRequestMessage } from '@workslocal/shared';
 import { silentLogger } from '@workslocal/shared';
+import { makeHttpRequest as _makeHttpRequest } from '@workslocal/test-utils';
 import { describe, expect, it } from 'vitest';
 
 import { createCatchProxy } from '../src/catch-proxy.js';
 
 function mockHttpRequest(overrides: Partial<HttpRequestMessage> = {}): HttpRequestMessage {
-  return {
-    type: 'http_request',
-    request_id: 'req-123',
+  return _makeHttpRequest({
+    requestId: 'req-123',
     method: 'POST',
     path: '/webhook',
     headers: { 'content-type': 'application/json' },
     body: Buffer.from('{"test":true}').toString('base64'),
-    query: {},
     ...overrides,
-  } as HttpRequestMessage;
+  }) as HttpRequestMessage;
 }
 
 describe('CatchProxy', () => {
@@ -138,6 +137,36 @@ describe('CatchProxy', () => {
       expect(r1.statusCode).toBe(200);
       expect(r2.statusCode).toBe(200);
       expect(r3.statusCode).toBe(200);
+    });
+  });
+
+  describe('method handling', () => {
+    it('returns same response for all HTTP methods', () => {
+      const proxy = createCatchProxy({
+        statusCode: 200,
+        responseBody: 'ok',
+        responseHeaders: {},
+        logger: silentLogger,
+      });
+
+      for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']) {
+        const response = proxy.respond(mockHttpRequest({ method }));
+        expect(response.statusCode).toBe(200);
+      }
+    });
+  });
+
+  describe('large payloads', () => {
+    it('handles 5MB request body without crashing', () => {
+      const proxy = createCatchProxy({
+        statusCode: 200,
+        responseBody: '',
+        responseHeaders: {},
+        logger: silentLogger,
+      });
+
+      const largeBody = Buffer.from('x'.repeat(5 * 1024 * 1024)).toString('base64');
+      expect(() => proxy.respond(mockHttpRequest({ body: largeBody }))).not.toThrow();
     });
   });
 });

@@ -143,12 +143,24 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
+      '@workslocal/test-utils':
+        specifier: workspace:*
+        version: link:../test-utils
 
   packages/shared:
     dependencies:
       zod:
         specifier: ^3.23.0
         version: 3.25.76
+
+  packages/test-utils:
+    dependencies:
+      '@workslocal/shared':
+        specifier: workspace:*
+        version: link:../shared
+      vitest:
+        specifier: '>=2.0.0'
+        version: 2.1.9(@types/node@20.19.37)(lightningcss@1.32.0)
 
   relay/cloudflare:
     dependencies:

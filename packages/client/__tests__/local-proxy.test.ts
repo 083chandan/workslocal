@@ -2,21 +2,17 @@ import http from 'node:http';
 
 import type { HttpRequestMessage } from '@workslocal/shared';
 import { silentLogger } from '@workslocal/shared';
+import { makeHttpRequest as _makeHttpRequest } from '@workslocal/test-utils';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createLocalProxy } from '../src/local-proxy.js';
 
 function mockHttpRequest(overrides: Partial<HttpRequestMessage> = {}): HttpRequestMessage {
-  return {
-    type: 'http_request',
-    request_id: 'req-123',
-    method: 'GET',
+  return _makeHttpRequest({
+    requestId: 'req-123',
     path: '/test',
-    headers: {},
-    body: '',
-    query: {},
     ...overrides,
-  } as HttpRequestMessage;
+  }) as HttpRequestMessage;
 }
 
 // ─── Test HTTP server ────────────────────────────────────
@@ -208,6 +204,37 @@ describe('LocalProxy', () => {
       expect(body.headers['host']).not.toBe('myapp.workslocal.exposed');
       // custom header should pass through
       expect(body.headers['x-custom']).toBe('value');
+    });
+  });
+
+  describe('concurrency', () => {
+    it('handles 10 concurrent requests without errors', async () => {
+      const requests = Array.from({ length: 10 }, (_, i) =>
+        proxy.forward(
+          mockHttpRequest({ path: '/echo', request_id: `concurrent-${String(i)}` }),
+          testPort,
+        ),
+      );
+      const responses = await Promise.all(requests);
+      expect(responses).toHaveLength(10);
+      for (const r of responses) {
+        expect(r.statusCode).toBe(200);
+      }
+    });
+  });
+
+  describe('encoding', () => {
+    it('preserves query params through forwarding', async () => {
+      const response = await proxy.forward(
+        mockHttpRequest({ path: '/echo', query: { q: 'hello world', lang: 'en' } }),
+        testPort,
+      );
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(Buffer.from(response.body, 'base64').toString('utf-8')) as {
+        path: string;
+      };
+      expect(body.path).toContain('q=');
+      expect(body.path).toContain('lang=en');
     });
   });
 });

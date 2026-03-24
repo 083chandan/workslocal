@@ -1,12 +1,12 @@
 {
-  "name": "@workslocal/client",
+  "name": "@workslocal/test-utils",
   "version": "0.1.0",
   "private": true,
-  "description": "WorksLocal tunnel client — WebSocket, local proxy, request capture",
+  "description": "Shared test utilities for the WorksLocal monorepo",
   "repository": {
     "type": "git",
     "url": "https://github.com/083chandan/workslocal",
-    "directory": "packages/client"
+    "directory": "packages/test-utils"
   },
   "license": "MIT",
   "type": "module",
@@ -27,16 +27,12 @@
     "build": "tsup",
     "clean": "rm -rf dist",
     "dev": "tsup --watch",
-    "lint": "eslint src/",
-    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@workslocal/shared": "workspace:*",
-    "ws": "^8.19.0"
+    "@workslocal/shared": "workspace:*"
   },
-  "devDependencies": {
-    "@types/ws": "^8.18.1",
-    "@workslocal/test-utils": "workspace:*"
+  "peerDependencies": {
+    "vitest": ">=2.0.0"
   }
 }

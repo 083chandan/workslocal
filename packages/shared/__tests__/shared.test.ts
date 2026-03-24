@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  ANONYMOUS_TUNNEL_TTL_MS,
+  API_KEY_PREFIX,
   apiKeySchema,
   AppError,
   createTunnelSchema,
@@ -8,13 +10,18 @@ import {
   ErrorCode,
   formatPublicUrl,
   generateRandomSubdomain,
+  HEARTBEAT_INTERVAL_MS,
   isValidTunnelDomain,
+  MAX_PAYLOAD_BYTES,
   parseHostHeader,
   RESERVED_SUBDOMAINS,
+  SUBDOMAIN_REGEX,
+  SUBDOMAIN_RESERVATION_MS,
   subdomainSchema,
   TUNNEL_DOMAINS,
   validateSubdomain,
 } from '../src/index.js';
+import { clientMessageSchema, createTunnelMessageSchema } from '../src/schemas/ws.js';
 
 describe('@workslocal/shared', () => {
   describe('constants', () => {
@@ -209,6 +216,277 @@ describe('@workslocal/shared', () => {
       expect(ErrorCode.SUBDOMAIN_TAKEN).toBe('SUBDOMAIN_TAKEN');
       expect(ErrorCode.RATE_LIMITED).toBe('RATE_LIMITED');
       expect(ErrorCode.NOT_IMPLEMENTED).toBe('NOT_IMPLEMENTED');
+    });
+  });
+
+  // ---- validateSubdomain -- edge cases (security, boundaries) ----
+
+  describe('validateSubdomain -- edge cases', () => {
+    it('rejects path traversal attempts', () => {
+      expect(validateSubdomain('../../etc')).not.toBeNull();
+      expect(validateSubdomain('../passwd')).not.toBeNull();
+    });
+
+    it('rejects XSS strings', () => {
+      expect(validateSubdomain('<script>')).not.toBeNull();
+      expect(validateSubdomain('alert(1)')).not.toBeNull();
+    });
+
+    it('rejects SQL injection patterns', () => {
+      expect(validateSubdomain("'; DROP TABLE--")).not.toBeNull();
+      expect(validateSubdomain('1 OR 1=1')).not.toBeNull();
+    });
+
+    it('rejects null bytes', () => {
+      expect(validateSubdomain('my\x00app')).not.toBeNull();
+    });
+
+    it('rejects unicode characters', () => {
+      expect(validateSubdomain('caf\u00e9')).not.toBeNull();
+      expect(validateSubdomain('\u0430pp')).not.toBeNull();
+    });
+
+    it('rejects whitespace variants', () => {
+      expect(validateSubdomain('my\tapp')).not.toBeNull();
+      expect(validateSubdomain('my\napp')).not.toBeNull();
+      expect(validateSubdomain('my\rapp')).not.toBeNull();
+    });
+
+    it('rejects all RESERVED_SUBDOMAINS exhaustively', () => {
+      for (const reserved of RESERVED_SUBDOMAINS) {
+        expect(validateSubdomain(reserved)).not.toBeNull();
+      }
+    });
+
+    it('accepts double hyphens in middle', () => {
+      expect(validateSubdomain('my--app')).toBeNull();
+    });
+
+    it('accepts hyphens between alphanumeric', () => {
+      expect(validateSubdomain('a-b-c-d-e')).toBeNull();
+    });
+
+    it('rejects hyphens-only', () => {
+      expect(validateSubdomain('---')).not.toBeNull();
+    });
+
+    it('accepts numeric-only subdomain', () => {
+      expect(validateSubdomain('12345')).toBeNull();
+    });
+  });
+
+  // ---- generateRandomSubdomain -- robustness ----
+
+  describe('generateRandomSubdomain -- robustness', () => {
+    it('never generates a reserved subdomain (1000 iterations)', () => {
+      for (let i = 0; i < 1000; i++) {
+        const sub = generateRandomSubdomain();
+        expect(RESERVED_SUBDOMAINS).not.toContain(sub);
+      }
+    });
+
+    it('always generates a valid subdomain (1000 iterations)', () => {
+      for (let i = 0; i < 1000; i++) {
+        const sub = generateRandomSubdomain();
+        expect(validateSubdomain(sub)).toBeNull();
+      }
+    });
+
+    it('generates unique values with high probability', () => {
+      const subs = new Set(Array.from({ length: 100 }, () => generateRandomSubdomain()));
+      expect(subs.size).toBeGreaterThan(95);
+    });
+  });
+
+  // ---- parseHostHeader -- edge cases ----
+
+  describe('parseHostHeader -- edge cases', () => {
+    it('returns null for empty string', () => {
+      expect(parseHostHeader('')).toBeNull();
+    });
+
+    it('returns null for IP addresses', () => {
+      expect(parseHostHeader('192.168.1.1')).toBeNull();
+      expect(parseHostHeader('192.168.1.1:3000')).toBeNull();
+    });
+
+    it('returns null for localhost', () => {
+      expect(parseHostHeader('localhost')).toBeNull();
+      expect(parseHostHeader('localhost:3000')).toBeNull();
+    });
+
+    it('returns null for multi-level subdomain', () => {
+      const result = parseHostHeader('my.app.workslocal.exposed');
+      expect(result).toBeNull();
+    });
+
+    it('returns null for very long host header', () => {
+      const longHost = 'a'.repeat(200) + '.workslocal.exposed';
+      const result = parseHostHeader(longHost);
+      if (result) {
+        expect(validateSubdomain(result.subdomain)).not.toBeNull();
+      }
+    });
+  });
+
+  // ---- createTunnelSchema -- edge cases ----
+
+  describe('createTunnelSchema -- edge cases', () => {
+    it('rejects string port', () => {
+      expect(createTunnelSchema.safeParse({ port: '3000' }).success).toBe(false);
+    });
+
+    it('rejects negative port', () => {
+      expect(createTunnelSchema.safeParse({ port: -1 }).success).toBe(false);
+    });
+
+    it('accepts boundary port 1', () => {
+      expect(createTunnelSchema.safeParse({ port: 1 }).success).toBe(true);
+    });
+
+    it('accepts boundary port 65535', () => {
+      expect(createTunnelSchema.safeParse({ port: 65535 }).success).toBe(true);
+    });
+
+    it('rejects port 65536', () => {
+      expect(createTunnelSchema.safeParse({ port: 65536 }).success).toBe(false);
+    });
+
+    it('rejects float port', () => {
+      expect(createTunnelSchema.safeParse({ port: 3000.5 }).success).toBe(false);
+    });
+
+    it('accepts missing optional fields', () => {
+      expect(createTunnelSchema.safeParse({ port: 3000 }).success).toBe(true);
+    });
+  });
+
+  // ---- WS schemas ----
+
+  describe('WS schemas', () => {
+    it('createTunnelMessageSchema accepts valid create_tunnel message', () => {
+      const result = createTunnelMessageSchema.safeParse({
+        type: 'create_tunnel',
+        local_port: 3000,
+        client_version: '0.1.0',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('createTunnelMessageSchema rejects missing client_version', () => {
+      const result = createTunnelMessageSchema.safeParse({
+        type: 'create_tunnel',
+        local_port: 3000,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('clientMessageSchema resolves each message type', () => {
+      expect(
+        clientMessageSchema.safeParse({
+          type: 'create_tunnel',
+          local_port: 3000,
+          client_version: '0.1.0',
+        }).success,
+      ).toBe(true);
+
+      expect(
+        clientMessageSchema.safeParse({
+          type: 'close_tunnel',
+          tunnel_id: 'tun-123',
+        }).success,
+      ).toBe(true);
+
+      expect(
+        clientMessageSchema.safeParse({
+          type: 'http_response',
+          request_id: 'req-1',
+          status_code: 200,
+          headers: {},
+          body: '',
+        }).success,
+      ).toBe(true);
+
+      expect(
+        clientMessageSchema.safeParse({
+          type: 'ping',
+          timestamp: Date.now(),
+        }).success,
+      ).toBe(true);
+    });
+
+    it('clientMessageSchema rejects unknown type', () => {
+      expect(
+        clientMessageSchema.safeParse({
+          type: 'unknown_type',
+        }).success,
+      ).toBe(false);
+    });
+  });
+
+  // ---- AppError -- all error codes ----
+
+  describe('AppError -- all error codes', () => {
+    it('every ErrorCode produces a message and statusCode in 400-599', () => {
+      for (const code of Object.values(ErrorCode)) {
+        const err = new AppError(code);
+        expect(err.message).toBeTruthy();
+        expect(err.statusCode).toBeGreaterThanOrEqual(400);
+        expect(err.statusCode).toBeLessThan(600);
+      }
+    });
+
+    it('toJSON never includes stack trace', () => {
+      const err = new AppError('AUTH_FAILED');
+      const json = err.toJSON();
+      expect(json).not.toHaveProperty('stack');
+      expect(JSON.stringify(json)).not.toContain('at ');
+    });
+
+    it('preserves details parameter', () => {
+      const details = { field: 'port', reason: 'out of range' };
+      const err = new AppError('VALIDATION_ERROR', 'Bad input', details);
+      expect(err.details).toEqual(details);
+    });
+
+    it('isAppError returns false for plain Error, string, null', () => {
+      expect(AppError.isAppError(new Error('generic'))).toBe(false);
+      expect(AppError.isAppError('string')).toBe(false);
+      expect(AppError.isAppError(null)).toBe(false);
+    });
+  });
+
+  // ---- constants -- integrity checks ----
+
+  describe('constants -- integrity checks', () => {
+    it('API_KEY_PREFIX equals wl_k_', () => {
+      expect(API_KEY_PREFIX).toBe('wl_k_');
+    });
+
+    it('MAX_PAYLOAD_BYTES equals 10MB', () => {
+      expect(MAX_PAYLOAD_BYTES).toBe(10 * 1024 * 1024);
+    });
+
+    it('HEARTBEAT_INTERVAL_MS equals 30 seconds', () => {
+      expect(HEARTBEAT_INTERVAL_MS).toBe(30_000);
+    });
+
+    it('SUBDOMAIN_RESERVATION_MS equals 30 minutes', () => {
+      expect(SUBDOMAIN_RESERVATION_MS).toBe(1_800_000);
+    });
+
+    it('SUBDOMAIN_REGEX matches valid names', () => {
+      expect(SUBDOMAIN_REGEX.test('validname')).toBe(true);
+      expect(SUBDOMAIN_REGEX.test('my-app')).toBe(true);
+    });
+
+    it('SUBDOMAIN_REGEX rejects uppercase and leading hyphens', () => {
+      expect(SUBDOMAIN_REGEX.test('UPPERCASE')).toBe(false);
+      expect(SUBDOMAIN_REGEX.test('-leading')).toBe(false);
+    });
+
+    it('ANONYMOUS_TUNNEL_TTL_MS equals 2 hours', () => {
+      expect(ANONYMOUS_TUNNEL_TTL_MS).toBe(7_200_000);
     });
   });
 });

@@ -14,7 +14,16 @@ function createMockEnv(
 
   return {
     TUNNEL: {} as Env['TUNNEL'],
-    DB: {} as Env['DB'],
+    DB: {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          first: vi.fn().mockResolvedValue(null),
+          all: vi.fn().mockResolvedValue({ results: [] }),
+          raw: vi.fn().mockResolvedValue([]),
+          run: vi.fn().mockResolvedValue({ success: true }),
+        }),
+      }),
+    } as unknown as D1Database,
     KV: {
       get: vi.fn((key: string) => kvStore.get(key) ?? null),
       put: vi.fn((key: string, value: string) => {
@@ -63,7 +72,7 @@ describe('authenticateRequest', () => {
       const result = await authenticateRequest(mockRequest('Bearer '), env);
 
       expect(result.authenticated).toBe(false);
-      expect(result.error).toBe('Empty token');
+      expect(result.error).toBe('Invalid token format');
     });
 
     it('rejects unrecognized token format', async () => {
@@ -113,12 +122,14 @@ describe('authenticateRequest', () => {
     it('rejects invalid API key not in KV or D1', async () => {
       const env = createMockEnv();
 
-      // Mock D1 to return no results
+      // Mock D1 to return no results (needs raw() for drizzle-orm compatibility)
       env.DB = {
         prepare: vi.fn().mockReturnValue({
           bind: vi.fn().mockReturnValue({
             first: vi.fn().mockResolvedValue(null),
             all: vi.fn().mockResolvedValue({ results: [] }),
+            raw: vi.fn().mockResolvedValue([]),
+            run: vi.fn().mockResolvedValue({ success: true }),
           }),
         }),
       } as unknown as D1Database;
