@@ -26,7 +26,7 @@ export async function assertDevServerRunning(): Promise<void> {
     if (!resp.ok) {
       throw new Error(`Health check returned ${String(resp.status)}`);
     }
-    const body = await resp.json();
+    const body: Record<string, unknown> = await resp.json();
     const env = body.environment ?? body.env ?? '';
 
     if (env === 'production' || env === 'staging') {
