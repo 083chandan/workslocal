@@ -26,7 +26,7 @@ const Comparison = () => {
             </tr>
             <tr>
               <td className="py-6 text-muted uppercase">Privacy</td>
-              <td className="px-6 py-6">Data Centralized</td>
+              <td className="px-6 py-6">I have not Idea!</td>
               <td className="px-6 py-6 text-success">Dumb-Pipe P2P</td>
             </tr>
             <tr>

@@ -11,39 +11,42 @@ const CatchMode = () => {
             them until you're ready to spin up your local environment.
           </p>
         </div>
-        <div className="grid gap-1 bg-outline px-4 py-8 md:grid-cols-2">
-          <div className="flex h-80 flex-col bg-background p-6">
-            <div className="mb-6 flex items-center justify-between">
+        <div className="bg-outline p-1">
+          <div className="bg-background p-6">
+            <div className="mb-4 flex items-center justify-between">
               <span className="font-label text-[10px] tracking-widest text-muted uppercase">
-                Terminal 1: Controller
+                Terminal
               </span>
               <span className="h-2 w-2 rounded-full bg-primary"></span>
             </div>
-            <div className="grow space-y-2 overflow-hidden font-label text-sm">
-              <div className="text-muted">$ workslocal catch --port 8080</div>
-              <div className="text-primary">
-                ? Waiting for incoming requests on black-mesa-12.workslocal.sh
-              </div>
-              <div className="pt-4 text-secondary">
-                ✓ [12:50:22] Caught POST from Stripe (4.2kb)
-              </div>
-              <div className="text-secondary">✓ [12:50:24] Caught GET from Postman (1.1kb)</div>
-              <div className="animate-pulse text-on-surface">_</div>
-            </div>
-          </div>
-          <div className="flex h-80 flex-col bg-background p-6">
-            <div className="mb-6 flex items-center justify-between">
-              <span className="font-label text-[10px] tracking-widest text-muted uppercase">
-                Terminal 2: Local Server
+            <pre className="overflow-x-auto font-mono text-sm leading-relaxed text-on-surface-variant">
+              <span className="text-muted">$ </span>
+              <span className="text-on-surface">workslocal catch --name stripe-payments</span>
+              {'\n\n'}
+              <span className="text-muted">
+                {'────────────────────────────────────────────────────────────\n\n'}
               </span>
-              <span className="h-2 w-2 rounded-full bg-error"></span>
-            </div>
-            <div className="flex grow items-center justify-center border border-dashed border-outline font-label text-sm text-muted italic">
-              [Server Offline]
-            </div>
-            <div className="pt-4 font-label text-[10px] text-primary uppercase">
-              WorksLocal is holding 2 requests in queue...
-            </div>
+              <span className="text-secondary">✔ Catch mode active!</span>
+              {'\n\n'}
+              {'Public URL:   '}
+              <span className="text-primary">https://stripe-payments.workslocal.exposed</span>
+              {'\nInspector:    http://localhost:4040'}
+              {'\nReturning:    200 {"ok":true}'}
+              {'\nSubdomain:    stripe-payments\n\n'}
+              {'Paste the URL in your webhook dashboard.\n'}
+              {'All requests appear below and at http://localhost:4040\n\n'}
+              <span className="text-muted">{'Press Ctrl+C to stop.\n\n'}</span>
+              <span className="text-muted">
+                {'────────────────────────────────────────────────────────────\n\n'}
+              </span>
+              {'POST    / '}
+              <span className="text-secondary">200</span>
+              {' 1ms\n'}
+              {'POST    /get-user '}
+              <span className="text-secondary">200</span>
+              {' 0ms\n'}
+              <span className="animate-pulse text-on-surface">_</span>
+            </pre>
           </div>
         </div>
       </div>

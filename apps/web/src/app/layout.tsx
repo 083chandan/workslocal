@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 
+import Footer from '@/components/Footer';
+import NavHeader from '@/components/NavHeader';
 import { faqSchema, organizationSchema, siteMetadata, softwareSchema } from '@/lib/seo-content';
 
 import './globals.css';
@@ -33,7 +35,9 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <NavHeader />
         {children}
+        <Footer />
 
         {/* JSON-LD Structured Data for Google Rich Results */}
         <script

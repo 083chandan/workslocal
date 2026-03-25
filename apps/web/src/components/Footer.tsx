@@ -4,7 +4,7 @@ const Footer = () => {
       <div className="flex flex-col gap-2">
         <span className="font-headline text-sm font-bold text-on-surface">WorksLocal</span>
         <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-          © 2026 WorksLocal. Built by a solo developer.
+          © 2026 WorksLocal.
         </p>
       </div>
       <div className="flex gap-8">
@@ -24,12 +24,12 @@ const Footer = () => {
         >
           NPM
         </a>
-        <a
+        {/* <a
           className="font-mono text-xs tracking-widest text-muted uppercase transition-colors hover:text-primary"
           href="#"
         >
           Twitter
-        </a>
+        </a> */}
       </div>
     </footer>
   );
