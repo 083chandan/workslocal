@@ -150,9 +150,11 @@ export default function GettingStartedPage() {
           Random subdomain (e.g., <code className={code}>a8f3k2.workslocal.exposed</code>)
         </li>
         <li>
-          Custom subdomains with <code className={code}>--name</code> (reserved for 5 minutes after
+          Custom subdomains with <code className={code}>--name</code> (reserved for 30 minutes after
           disconnect)
         </li>
+        <li>Up to 2 simultaneous tunnels</li>
+        <li>Anonymous tunnels expire after 2 hours</li>
         <li>
           Web inspector at <code className={code}>localhost:4040</code>
         </li>
@@ -168,8 +170,8 @@ export default function GettingStartedPage() {
           <strong className="text-on-surface">Persistent subdomains</strong> — your{' '}
           <code className={code}>--name</code> survives restarts permanently
         </li>
-        <li>Up to 3 reserved subdomains (free tier)</li>
-        <li>7-day stale cleanup (unused subdomains are released after a week)</li>
+        <li>Up to 5 simultaneous tunnels</li>
+        <li>30-day stale cleanup (unused subdomains released after 30 days)</li>
       </ul>
       <p className="mt-4 leading-relaxed text-on-surface-variant">To authenticate:</p>
       <pre className="mt-4 overflow-x-auto border border-outline bg-surface p-4 font-mono text-sm text-on-surface">

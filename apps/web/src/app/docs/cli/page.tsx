@@ -321,7 +321,7 @@ export default function CLIPage() {
       <h4 className="mt-6 font-headline text-base font-bold text-on-surface">Why authenticate</h4>
       <ul className="mt-4 list-disc space-y-2 pl-6 text-on-surface-variant">
         <li>Persistent subdomains that survive restarts permanently</li>
-        <li>Up to 3 reserved subdomains (free tier)</li>
+        <li>Up to 5 simultaneous tunnels</li>
         <li>Required for future features: teams, custom domains, API keys</li>
       </ul>
 
@@ -572,7 +572,7 @@ export default function CLIPage() {
         <li>Up to 10 attempts by default</li>
         <li>On successful reconnect, all tunnels are re-created with the same subdomains</li>
         <li>
-          Subdomain reservation (5 minutes for anonymous, permanent for authenticated) prevents
+          Subdomain reservation (30 minutes for anonymous, permanent for authenticated) prevents
           hijacking during reconnect
         </li>
       </ol>
