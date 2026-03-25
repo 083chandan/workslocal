@@ -11,9 +11,6 @@ coverage/
 Thumbs.db
 *.log
 .turbo/
-.next/
-out/
-.vercel/
 /docs
 /.idea/
 test-client.mjs
@@ -22,3 +19,14 @@ tree.txt
 # Wrangler local state
 .wrangler/
 .dev.vars
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env.local
+.env.*.local
+
+# Vercel
+.vercel

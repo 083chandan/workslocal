@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Sitemap: https://workslocal.dev/sitemap.xml
+
+Disallow: /_next/
+Disallow: /api/

@@ -16,7 +16,7 @@ export function JsonViewer({ content }: JsonViewerProps): JSX.Element {
     .replace(/:\s*(null)/g, ': <span class="text-zinc-500">$1</span>'); // null
 
   return (
-    <pre className="text-sm font-mono p-4 overflow-x-auto whitespace-pre">
+    <pre className="overflow-x-auto p-4 font-mono text-sm whitespace-pre">
       <code dangerouslySetInnerHTML={{ __html: highlighted }} />
     </pre>
   );

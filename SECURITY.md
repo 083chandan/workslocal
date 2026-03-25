@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-**Email:** security@workslocal.dev
+**Email:** 083.chandan@gmail.com
 
 Please include: description, steps to reproduce, impact, suggested fix.
 We acknowledge within 48 hours and aim to fix critical issues within 7 days.

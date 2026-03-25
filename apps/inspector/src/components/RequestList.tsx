@@ -45,36 +45,36 @@ export function RequestList({ requests, selected, onSelect }: RequestListProps):
           <button
             key={req.requestId}
             onClick={() => onSelect(req)}
-            className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors hover:bg-(--accent) ${
+            className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-(--accent) ${
               isSelected ? 'bg-(--accent)' : ''
             }`}
           >
             {/* Method badge */}
             <span
-              className={`px-1.5 py-0.5 text-[10px] font-bold font-mono rounded ${methodClass} w-14 text-center shrink-0`}
+              className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold ${methodClass} w-14 shrink-0 text-center`}
             >
               {req.method}
             </span>
 
             {/* Path */}
-            <span className="text-xs font-mono truncate flex-1 text-(--foreground)">
+            <span className="flex-1 truncate font-mono text-xs text-(--foreground)">
               {req.path}
             </span>
 
             {/* Status */}
             <span
-              className={`text-xs font-mono font-bold shrink-0 ${statusColor(req.responseStatusCode)}`}
+              className={`shrink-0 font-mono text-xs font-bold ${statusColor(req.responseStatusCode)}`}
             >
               {req.responseStatusCode}
             </span>
 
             {/* Duration */}
-            <span className="text-[10px] text-(--muted-foreground) shrink-0 w-12 text-right">
+            <span className="w-12 shrink-0 text-right text-[10px] text-(--muted-foreground)">
               {req.responseTimeMs}ms
             </span>
 
             {/* Timestamp */}
-            <span className="text-[10px] text-(--muted-foreground) shrink-0">
+            <span className="shrink-0 text-[10px] text-(--muted-foreground)">
               {formatTime(req.timestamp)}
             </span>
           </button>

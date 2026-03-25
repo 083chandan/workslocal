@@ -1,6 +1,10 @@
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import nextPlugin from '@next/eslint-plugin-next';
 import importPlugin from 'eslint-plugin-import';
+import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -44,7 +48,34 @@ export default tseslint.config(
     },
   },
 
-  // ─── shared: console.log in the logger ────────────────────
+  // ─── Web app (Next.js + React) ─────────────────────────
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    plugins: {
+      '@next/next': nextPlugin,
+      'react': reactPlugin,
+      'react-hooks': reactHooksPlugin,
+      'jsx-a11y': jsxA11yPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      'no-console': ['warn', { allow: ['error', 'warn'] }],
+    },
+    settings: {
+      next: {
+        rootDir: 'apps/web/',
+      },
+      react: {
+        version: 'detect',
+      },
+    },
+  },
+
+  // ─── shared: console.log in the logger ────────────────
   {
     files: ['packages/shared/src/logger.ts'],
     rules: {
@@ -52,7 +83,7 @@ export default tseslint.config(
     },
   },
 
-  // ─── CLI: console.log IS the output ────────────────────
+  // ─── CLI: console.log IS the output ───────────────────
   {
     files: ['apps/cli/**/*.ts'],
     rules: {
@@ -60,7 +91,7 @@ export default tseslint.config(
     },
   },
 
-  // ─── Relay: allow console for Worker logger ────────────
+  // ─── Relay: allow console for Worker logger ───────────
   {
     files: ['relay/cloudflare/src/utils/logger.ts'],
     rules: {
@@ -68,7 +99,7 @@ export default tseslint.config(
     },
   },
 
-  // ─── Tests and seeds: relaxed rules ────────────────────
+  // ─── Tests and seeds: relaxed rules ───────────────────
   {
     files: ['**/__tests__/**/*.ts', '**/seeds/**/*.ts'],
     rules: {
@@ -80,7 +111,7 @@ export default tseslint.config(
     },
   },
 
-  // ─── Ignored paths ─────────────────────────────────────
+  // ─── Ignored paths ────────────────────────────────────
   {
     ignores: [
       '**/dist/**',
@@ -91,6 +122,7 @@ export default tseslint.config(
       '**/*.js',
       '**/*.mjs',
       '**/*.cjs',
+      'apps/web/.next/**',
     ],
   },
 );

@@ -34,14 +34,14 @@ export function Filters({ filters, onChange }: FiltersProps): JSX.Element {
   };
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 border-b border-(--border) text-sm">
+    <div className="flex items-center gap-3 border-b border-(--border) px-4 py-2 text-sm">
       {/* Method toggles */}
       <div className="flex gap-1">
         {METHODS.map((m) => (
           <button
             key={m}
             onClick={() => toggleMethod(m)}
-            className={`px-2 py-0.5 rounded text-xs font-mono transition-colors ${
+            className={`rounded px-2 py-0.5 font-mono text-xs transition-colors ${
               filters.methods.has(m)
                 ? 'bg-blue-500 text-white'
                 : 'bg-(--muted) text-(--muted-foreground) hover:bg-(--accent)'
@@ -58,7 +58,7 @@ export function Filters({ filters, onChange }: FiltersProps): JSX.Element {
           <button
             key={s.label}
             onClick={() => toggleStatus(s.min, s.max)}
-            className={`px-2 py-0.5 rounded text-xs font-mono transition-colors ${
+            className={`rounded px-2 py-0.5 font-mono text-xs transition-colors ${
               filters.statusMin === s.min
                 ? 'bg-blue-500 text-white'
                 : 'bg-(--muted) text-(--muted-foreground) hover:bg-(--accent)'
@@ -75,9 +75,7 @@ export function Filters({ filters, onChange }: FiltersProps): JSX.Element {
         placeholder="Filter by path..."
         value={filters.pathSearch}
         onChange={(e) => onChange({ ...filters, pathSearch: e.target.value })}
-        className="px-2 py-1 text-xs rounded bg-(--muted) text-(--foreground)
-                   placeholder-(--muted-foreground) border border-(--border)
-                   focus:outline-none focus:ring-1 focus:ring-blue-500 w-48"
+        className="w-48 rounded border border-(--border) bg-(--muted) px-2 py-1 text-xs text-(--foreground) placeholder-(--muted-foreground) focus:ring-1 focus:ring-blue-500 focus:outline-none"
       />
     </div>
   );

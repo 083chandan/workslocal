@@ -50,17 +50,17 @@ export function RequestDetail({ request, tunnelUrl }: RequestDetailProps): JSX.E
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Top bar: method + path + actions */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-(--border)">
+      <div className="flex items-center justify-between border-b border-(--border) px-4 py-3">
         <div className="flex items-center gap-3">
           <span
-            className={`px-2 py-0.5 text-xs font-bold font-mono rounded ${statusColor(request.responseStatusCode)}`}
+            className={`rounded px-2 py-0.5 font-mono text-xs font-bold ${statusColor(request.responseStatusCode)}`}
           >
             {request.responseStatusCode}
           </span>
-          <span className="text-sm font-bold font-mono">{request.method}</span>
-          <span className="text-sm font-mono text-(--muted-foreground) truncate max-w-md">
+          <span className="font-mono text-sm font-bold">{request.method}</span>
+          <span className="max-w-md truncate font-mono text-sm text-(--muted-foreground)">
             {request.path}
           </span>
         </div>
@@ -69,12 +69,12 @@ export function RequestDetail({ request, tunnelUrl }: RequestDetailProps): JSX.E
           {/* Copy as cURL */}
           <button
             onClick={() => void copyCurl()}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-(--muted) hover:bg-(--accent) transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md bg-(--muted) px-2.5 py-1 text-xs font-medium transition-colors hover:bg-(--accent)"
           >
             {copiedCurl ? (
-              <Check className="w-3 h-3 text-emerald-500" />
+              <Check className="h-3 w-3 text-emerald-500" />
             ) : (
-              <Copy className="w-3 h-3" />
+              <Copy className="h-3 w-3" />
             )}
             {copiedCurl ? 'Copied!' : 'cURL'}
           </button>
@@ -83,12 +83,12 @@ export function RequestDetail({ request, tunnelUrl }: RequestDetailProps): JSX.E
           {responseBody && (
             <button
               onClick={() => void copyResponseBody()}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-(--muted) hover:bg-(--accent) transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-md bg-(--muted) px-2.5 py-1 text-xs font-medium transition-colors hover:bg-(--accent)"
             >
               {copiedBody ? (
-                <Check className="w-3 h-3 text-emerald-500" />
+                <Check className="h-3 w-3 text-emerald-500" />
               ) : (
-                <Copy className="w-3 h-3" />
+                <Copy className="h-3 w-3" />
               )}
               {copiedBody ? 'Copied!' : 'Body'}
             </button>
@@ -102,7 +102,7 @@ export function RequestDetail({ request, tunnelUrl }: RequestDetailProps): JSX.E
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-4 py-2 text-xs font-medium transition-colors border-b-2 ${
+            className={`border-b-2 px-4 py-2 text-xs font-medium transition-colors ${
               tab === t.id
                 ? 'border-blue-500 text-(--foreground)'
                 : 'border-transparent text-(--muted-foreground) hover:text-(--foreground)'
@@ -192,7 +192,7 @@ function ResponseTab({
       {/* Status */}
       <Section title="Status">
         <span
-          className={`px-2 py-1 text-sm font-bold font-mono rounded ${statusColor(statusCode)}`}
+          className={`rounded px-2 py-1 font-mono text-sm font-bold ${statusColor(statusCode)}`}
         >
           {statusCode}
         </span>
@@ -220,20 +220,20 @@ function TimingTab({ request }: { request: CapturedRequest }): JSX.Element {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-xs text-(--muted-foreground) mb-1">Response Time</p>
-          <p className="text-2xl font-bold font-mono">{request.responseTimeMs}ms</p>
+          <p className="mb-1 text-xs text-(--muted-foreground)">Response Time</p>
+          <p className="font-mono text-2xl font-bold">{request.responseTimeMs}ms</p>
         </div>
         <div>
-          <p className="text-xs text-(--muted-foreground) mb-1">Timestamp</p>
-          <p className="text-sm font-mono">{timestamp.toLocaleString()}</p>
+          <p className="mb-1 text-xs text-(--muted-foreground)">Timestamp</p>
+          <p className="font-mono text-sm">{timestamp.toLocaleString()}</p>
         </div>
         <div>
-          <p className="text-xs text-(--muted-foreground) mb-1">Request Body Size</p>
-          <p className="text-sm font-mono">{formatBytes(decodeBody(request.requestBody).length)}</p>
+          <p className="mb-1 text-xs text-(--muted-foreground)">Request Body Size</p>
+          <p className="font-mono text-sm">{formatBytes(decodeBody(request.requestBody).length)}</p>
         </div>
         <div>
-          <p className="text-xs text-(--muted-foreground) mb-1">Response Body Size</p>
-          <p className="text-sm font-mono">
+          <p className="mb-1 text-xs text-(--muted-foreground)">Response Body Size</p>
+          <p className="font-mono text-sm">
             {formatBytes(decodeBody(request.responseBody).length)}
           </p>
         </div>
@@ -247,7 +247,7 @@ function TimingTab({ request }: { request: CapturedRequest }): JSX.Element {
 function Section({ title, children }: { title: string; children: React.ReactNode }): JSX.Element {
   return (
     <div>
-      <h3 className="text-xs font-medium text-(--muted-foreground) uppercase tracking-wider mb-2">
+      <h3 className="mb-2 text-xs font-medium tracking-wider text-(--muted-foreground) uppercase">
         {title}
       </h3>
       {children}
@@ -261,15 +261,15 @@ function HeadersTable({ entries }: { entries: [string, string][] }): JSX.Element
   }
 
   return (
-    <div className="rounded-md border border-(--border) overflow-hidden">
-      <table className="w-full text-xs font-mono">
+    <div className="overflow-hidden rounded-md border border-(--border)">
+      <table className="w-full font-mono text-xs">
         <tbody>
           {entries.map(([key, value], i) => (
             <tr key={`${key}-${String(i)}`} className={i % 2 === 0 ? 'bg-(--muted)/30' : ''}>
-              <td className="px-3 py-1.5 font-medium text-(--foreground) whitespace-nowrap align-top w-48">
+              <td className="w-48 px-3 py-1.5 align-top font-medium whitespace-nowrap text-(--foreground)">
                 {key}
               </td>
-              <td className="px-3 py-1.5 text-(--muted-foreground) break-all">{value}</td>
+              <td className="px-3 py-1.5 break-all text-(--muted-foreground)">{value}</td>
             </tr>
           ))}
         </tbody>
@@ -297,14 +297,14 @@ function CodeBlock({ content, isJson }: { content: string; isJson: boolean }): J
       .replace(/:\s*(null)/g, ': <span style="color:var(--json-null, #71717a)">$1</span>');
 
     return (
-      <pre className="text-xs font-mono p-3 rounded-md bg-(--muted)/50 overflow-x-auto whitespace-pre border border-(--border)">
+      <pre className="overflow-x-auto rounded-md border border-(--border) bg-(--muted)/50 p-3 font-mono text-xs whitespace-pre">
         <code dangerouslySetInnerHTML={{ __html: highlighted }} />
       </pre>
     );
   }
 
   return (
-    <pre className="text-xs font-mono p-3 rounded-md bg-(--muted)/50 overflow-x-auto whitespace-pre border border-(--border)">
+    <pre className="overflow-x-auto rounded-md border border-(--border) bg-(--muted)/50 p-3 font-mono text-xs whitespace-pre">
       {content}
     </pre>
   );

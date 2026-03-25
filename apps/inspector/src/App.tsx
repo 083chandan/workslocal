@@ -33,7 +33,7 @@ export function App(): JSX.Element {
   });
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex h-screen flex-col">
       <Header
         tunnelInfo={tunnelInfo}
         isConnected={isConnected}
@@ -45,7 +45,7 @@ export function App(): JSX.Element {
 
       <Filters filters={filters} onChange={setFilters} />
 
-      <Group orientation="horizontal" className="flex-1 min-h-0">
+      <Group orientation="horizontal" className="min-h-0 flex-1">
         {/* Left pane - request list */}
         <Panel defaultSize={35} minSize={20}>
           <div className="h-full overflow-y-auto">
@@ -57,7 +57,7 @@ export function App(): JSX.Element {
           </div>
         </Panel>
 
-        <Separator className="w-1 bg-(--border) hover:bg-blue-500 transition-colors cursor-col-resize" />
+        <Separator className="w-1 cursor-col-resize bg-(--border) transition-colors hover:bg-blue-500" />
 
         {/* Right pane - detail */}
         <Panel defaultSize={65} minSize={30}>
@@ -65,7 +65,7 @@ export function App(): JSX.Element {
             {selected ? (
               <RequestDetail request={selected} tunnelUrl={tunnelInfo?.publicUrl} />
             ) : (
-              <div className="flex items-center justify-center h-full text-(--muted-foreground) text-sm">
+              <div className="flex h-full items-center justify-center text-sm text-(--muted-foreground)">
                 Select a request to view details
               </div>
             )}
