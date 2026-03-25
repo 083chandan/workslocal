@@ -2,7 +2,7 @@ import Image from 'next/image';
 
 const Inspector = () => {
   return (
-    <section className="bg-surface px-6 py-24">
+    <section className="bg-surface px-4 py-12 md:px-6 md:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="mb-12">
           <h2 className="font-headline text-3xl font-bold tracking-tighter text-on-surface">

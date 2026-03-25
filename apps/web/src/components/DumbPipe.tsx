@@ -1,20 +1,24 @@
 const DumbPipe = () => {
   return (
-    <section className="bg-surface py-32">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-8 lg:grid-cols-2">
+    <section className="bg-surface py-16 md:py-32">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-6 md:gap-16 md:px-8 lg:grid-cols-2">
         <div className="relative flex aspect-video items-center justify-center overflow-hidden border border-outline bg-background">
           <div className="hatch-pattern absolute inset-0 opacity-20"></div>
-          <div className="relative z-10 flex items-center gap-12">
-            <div className="flex h-20 w-20 items-center justify-center border border-primary">
-              <span className="material-symbols-outlined text-4xl text-primary">dns</span>
+          <div className="relative z-10 flex items-center gap-6 md:gap-12">
+            <div className="flex h-14 w-14 items-center justify-center border border-primary md:h-20 md:w-20">
+              <span className="material-symbols-outlined text-3xl text-primary md:text-4xl">
+                dns
+              </span>
             </div>
-            <div className="relative h-px w-32 bg-primary">
+            <div className="relative h-px w-16 bg-primary md:w-32">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 font-mono text-[8px] text-muted">
                 ENCRYPTED
               </div>
             </div>
-            <div className="flex h-20 w-20 items-center justify-center border border-muted opacity-50">
-              <span className="material-symbols-outlined text-4xl text-muted">visibility_off</span>
+            <div className="flex h-14 w-14 items-center justify-center border border-muted opacity-50 md:h-20 md:w-20">
+              <span className="material-symbols-outlined text-3xl text-muted md:text-4xl">
+                visibility_off
+              </span>
             </div>
           </div>
         </div>

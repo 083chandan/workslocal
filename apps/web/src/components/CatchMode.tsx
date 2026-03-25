@@ -1,8 +1,8 @@
 const CatchMode = () => {
   return (
-    <section className="bg-background px-6 py-24">
+    <section className="bg-background px-4 py-12 md:px-6 md:py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-16 text-center">
+        <div className="mb-8 text-center md:mb-16">
           <h2 className="mb-4 font-headline text-4xl font-bold tracking-tighter text-on-surface">
             The "Catch Mode"
           </h2>

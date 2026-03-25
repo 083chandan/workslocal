@@ -13,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 
 const sections = [
@@ -36,11 +37,12 @@ const sections = [
 
 export function DocsSidebar() {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
 
   return (
     <Sidebar
-      collapsible="none"
-      className="sticky top-16 h-[calc(100svh-4rem)] shrink-0 overflow-y-auto border-r border-outline"
+      collapsible="offcanvas"
+      className="top-16 h-[calc(100svh-4rem)] overflow-y-auto border-outline"
     >
       <SidebarContent>
         {sections.map((section) => (
@@ -57,7 +59,7 @@ export function DocsSidebar() {
                       isActive={pathname === item.href}
                       className="data-[active=true]:text-primary"
                     >
-                      <Link href={item.href}>
+                      <Link href={item.href} onClick={() => setOpenMobile(false)}>
                         <item.icon className="size-4" />
                         <span>{item.title}</span>
                       </Link>

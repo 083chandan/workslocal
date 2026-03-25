@@ -9,7 +9,7 @@ const code = 'font-mono text-sm bg-surface-container px-1.5 py-0.5 text-primary'
 
 export default function CatchModePage() {
   return (
-    <article className="w-full px-8 py-8">
+    <article className="w-full px-4 py-6 md:px-8 md:py-8">
       <h1 className="font-headline text-3xl font-black text-on-surface">Catch Mode</h1>
       <p className="mt-4 font-mono text-sm tracking-wide text-muted">
         Capture incoming HTTP requests without running a local server. Like webhook.site built into

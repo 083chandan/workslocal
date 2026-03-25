@@ -48,7 +48,7 @@ export const siteMetadata: Metadata = {
     siteName: 'WorksLocal',
     title: 'WorksLocal — Free open-source ngrok alternative',
     description:
-      'Expose localhost to the internet in 30 seconds. Built-in webhook inspector, catch mode, and AI integration. MIT licensed, forever free.',
+      'Expose localhost to the internet in 30 seconds. Built-in webhook inspector, catch mode. MIT licensed, forever free.',
     images: [
       {
         url: '/og-image.png',

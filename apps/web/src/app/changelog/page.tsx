@@ -79,7 +79,7 @@ export default async function ChangelogPage() {
   const releases = await fetchReleases();
 
   return (
-    <main className="flex flex-1 flex-col items-center px-8 pt-24 pb-16">
+    <main className="flex flex-1 flex-col items-center px-4 pt-20 pb-12 md:px-8 md:pt-24 md:pb-16">
       <div className="w-full max-w-3xl">
         <h1 className="font-headline text-4xl font-black text-on-surface">Changelog</h1>
         <p className="mt-2 font-mono text-sm tracking-wide text-muted">
@@ -91,7 +91,7 @@ export default async function ChangelogPage() {
             {releases.map((release, i) => (
               <article
                 key={release.tag_name}
-                className={`relative border-l-2 border-outline pl-8 ${
+                className={`relative border-l-2 border-outline pl-6 md:pl-8 ${
                   i < releases.length - 1 ? 'pb-12' : 'pb-0'
                 }`}
               >

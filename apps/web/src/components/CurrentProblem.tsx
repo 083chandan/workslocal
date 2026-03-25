@@ -157,8 +157,8 @@ const CurrentProblem = () => {
   }, []);
 
   return (
-    <section className="border-y border-outline px-24 py-24">
-      <div className="grid items-center gap-16 md:grid-cols-2">
+    <section className="border-y border-outline px-6 py-12 md:px-16 md:py-24 lg:px-24">
+      <div className="grid items-center gap-8 md:grid-cols-2 md:gap-16">
         <div>
           <h2 className="mb-6 font-headline text-4xl font-bold">
             Your ngrok URL changed. <ScrambleText />
@@ -196,7 +196,7 @@ const CurrentProblem = () => {
         </div>
         <div
           ref={containerRef}
-          className="min-h-[180px] space-y-2 border border-outline bg-surface p-8 font-label text-xs"
+          className="min-h-[180px] space-y-2 border border-outline bg-surface p-4 font-label text-xs md:p-8"
         >
           {terminalLines.map((line, i) => (
             <TerminalLine key={i} line={line} isVisible={inView} />

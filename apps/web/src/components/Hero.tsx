@@ -3,7 +3,7 @@ import CopyInstallCommand from './CopyInstallCommand';
 const Hero = () => {
   return (
     <>
-      <section className="relative flex min-h-217.5 flex-col items-center justify-center overflow-hidden px-6">
+      <section className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden px-4 pt-16 md:min-h-217.5 md:px-6">
         <div className="pointer-events-none absolute inset-0 z-0 opacity-20">
           <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -122,10 +122,11 @@ const Hero = () => {
           </svg>
         </div>
         <div className="relative z-10 max-w-4xl text-center">
-          <h1 className="mb-4 font-headline text-6xl leading-none font-bold tracking-tighter uppercase md:text-8xl">
-            Develop Locally <span className="text-primary">Expose Securely.</span>
+          <h1 className="mb-4 font-headline text-4xl leading-none font-bold tracking-tighter uppercase sm:text-6xl md:text-8xl">
+            Develop Locally <br />
+            <span className="text-primary">Expose Securely.</span>
           </h1>
-          <p className="mb-12 font-mono text-lg tracking-tight text-muted md:text-xl">
+          <p className="mb-8 font-mono text-base tracking-tight text-muted sm:text-lg md:mb-12 md:text-xl">
             The open-source tunnel built for developers.
             <br />
             No configuration, just tunnels.
