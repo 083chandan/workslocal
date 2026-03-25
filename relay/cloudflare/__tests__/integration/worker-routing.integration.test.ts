@@ -17,7 +17,7 @@ describe('Worker routing — health', () => {
   it('GET /health returns 200 with status ok', async () => {
     const resp = await fetch(`${BASE_URL}/health`);
     expect(resp.status).toBe(200);
-    const body = await resp.json();
+    const body: { ok: boolean; data: { status: string } } = await resp.json();
     expect(body.ok).toBe(true);
     expect(body.data.status).toBe('ok');
   });
@@ -56,7 +56,7 @@ describe('Worker routing — unknown routes', () => {
   it('returns 404 JSON for /nonexistent', async () => {
     const resp = await fetch(`${BASE_URL}/nonexistent`);
     expect(resp.status).toBe(404);
-    const body = await resp.json();
+    const body: { ok: boolean; error: { code: string } } = await resp.json();
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('NOT_FOUND');
   });

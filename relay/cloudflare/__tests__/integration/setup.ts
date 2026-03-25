@@ -9,7 +9,7 @@ beforeAll(async () => {
   for (let i = 0; i < maxRetries; i++) {
     try {
       const res = await fetch(`${BASE_URL}/health`);
-      const body = await res.json();
+      const body: { ok?: boolean; data?: { status?: string } } = await res.json();
 
       if (body.ok && body.data && body.data.status === 'ok') {
         return;
