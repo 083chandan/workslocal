@@ -1,8 +1,17 @@
+import type { Metadata } from 'next';
+
 import CopyInstallCommand from '@/components/CopyInstallCommand';
 
-export const metadata = {
-  title: 'Pricing | WorksLocal',
-  description: 'WorksLocal pricing plans — free and premium options.',
+export const metadata: Metadata = {
+  title: 'Free',
+  description:
+    'WorksLocal is 100% free and open source. No trials, no bandwidth caps, no feature gates. MIT licensed, forever free.',
+  alternates: { canonical: '/pricing' },
+  openGraph: {
+    title: 'Pricing | WorksLocal',
+    description: 'WorksLocal is 100% free and open source. MIT licensed, forever free.',
+    url: '/pricing',
+  },
 };
 
 export default function PricingPage() {

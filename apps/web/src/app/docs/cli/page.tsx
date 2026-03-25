@@ -1,6 +1,15 @@
-export const metadata = {
-  title: 'CLI Reference | WorksLocal Docs',
-  description: 'WorksLocal CLI commands, flags, and configuration options.',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'CLI Reference',
+  description:
+    'Complete reference for the WorksLocal CLI — commands, flags, and configuration options for localhost tunneling.',
+  alternates: { canonical: '/docs/cli' },
+  openGraph: {
+    title: 'CLI Reference | WorksLocal',
+    description: 'Complete reference for WorksLocal CLI commands, flags, and configuration.',
+    url: '/docs/cli',
+  },
 };
 
 const code = 'font-mono text-sm bg-surface-container px-1.5 py-0.5 text-primary';

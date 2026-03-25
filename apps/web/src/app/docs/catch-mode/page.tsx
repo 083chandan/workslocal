@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 
-export const metadata = {
-  title: 'Catch Mode | WorksLocal Docs',
-  description: 'Learn how to use Catch Mode to intercept and inspect traffic.',
+export const metadata: Metadata = {
+  title: 'Catch Mode',
+  description:
+    'Capture incoming webhooks and HTTP requests without a running server. Queue, inspect, and replay requests when your server comes online.',
+  alternates: { canonical: '/docs/catch-mode' },
+  openGraph: {
+    title: 'Catch Mode | WorksLocal',
+    description: 'Capture webhooks without a running server. Queue, inspect, and replay requests.',
+    url: '/docs/catch-mode',
+  },
 };
 
 const code = 'font-mono text-sm bg-surface-container px-1.5 py-0.5 text-primary';

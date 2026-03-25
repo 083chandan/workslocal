@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Getting Started | WorksLocal Docs',
-  description: 'Get started with WorksLocal — installation, setup, and first steps.',
+export const metadata: Metadata = {
+  title: 'Getting Started',
+  description:
+    'Install WorksLocal and expose your localhost to the internet in 30 seconds. Step-by-step setup guide — no account required.',
+  alternates: { canonical: '/docs/getting-started' },
+  openGraph: {
+    title: 'Getting Started | WorksLocal',
+    description: 'Install WorksLocal and expose your localhost to the internet in 30 seconds.',
+    url: '/docs/getting-started',
+  },
 };
 
 const code = 'font-mono text-sm bg-surface-container px-1.5 py-0.5 text-primary';

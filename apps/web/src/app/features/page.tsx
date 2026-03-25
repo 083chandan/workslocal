@@ -1,6 +1,15 @@
-export const metadata = {
-  title: 'Features | WorksLocal',
-  description: 'Explore WorksLocal features — tunnel inspection, catch mode, and more.',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Features',
+  description:
+    'Explore WorksLocal features — HTTPS tunneling, web request inspector, catch mode for webhooks, AI integration, and more.',
+  alternates: { canonical: '/features' },
+  openGraph: {
+    title: 'Features | WorksLocal',
+    description: 'HTTPS tunneling, web inspector, catch mode, AI integration, and more.',
+    url: '/features',
+  },
 };
 
 export default function FeaturesPage() {

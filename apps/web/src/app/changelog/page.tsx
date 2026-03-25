@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Markdown, { type Components } from 'react-markdown';
 
 interface GitHubRelease {
@@ -8,9 +9,16 @@ interface GitHubRelease {
   html_url: string;
 }
 
-export const metadata = {
-  title: 'Changelog | WorksLocal',
-  description: 'WorksLocal changelog — latest updates and release notes.',
+export const metadata: Metadata = {
+  title: 'Changelog',
+  description:
+    'WorksLocal release notes — new features, bug fixes, and improvements in every version.',
+  alternates: { canonical: '/changelog' },
+  openGraph: {
+    title: 'Changelog | WorksLocal',
+    description: 'WorksLocal release notes — new features, bug fixes, and improvements.',
+    url: '/changelog',
+  },
 };
 
 const GITHUB_RELEASES_URL =

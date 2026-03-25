@@ -1,8 +1,17 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 
-export const metadata = {
-  title: 'Web Inspector | WorksLocal Docs',
-  description: 'Use the Web Inspector to visualize and debug your local traffic.',
+export const metadata: Metadata = {
+  title: 'Web Inspector',
+  description:
+    'Built-in request/response inspector for WorksLocal tunnels. View headers, bodies, timing, and replay requests from your browser.',
+  alternates: { canonical: '/docs/web-inspector' },
+  openGraph: {
+    title: 'Web Inspector | WorksLocal',
+    description:
+      'Built-in request/response inspector. View headers, bodies, timing, and replay requests.',
+    url: '/docs/web-inspector',
+  },
 };
 
 const code = 'font-mono text-sm bg-surface-container px-1.5 py-0.5 text-primary';
