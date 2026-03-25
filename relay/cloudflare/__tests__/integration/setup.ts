@@ -11,7 +11,7 @@ beforeAll(async () => {
       const res = await fetch(`${BASE_URL}/health`);
       const body = await res.json();
 
-      if (body.ok && body.data && (body.data as Record<string, unknown>).status === 'ok') {
+      if (body.ok && body.data && body.data.status === 'ok') {
         return;
       }
     } catch {

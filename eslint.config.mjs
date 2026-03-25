@@ -61,6 +61,7 @@ export default tseslint.config(
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       'react-hooks/rules-of-hooks': 'error',
+      '@next/next/no-html-link-for-pages': 'off',
       'react-hooks/exhaustive-deps': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
       'no-console': ['warn', { allow: ['error', 'warn'] }],
