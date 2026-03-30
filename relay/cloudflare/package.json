@@ -28,10 +28,10 @@
     "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260317.1",
+    "@cloudflare/workers-types": "^4.20260329.1",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10",
-    "wrangler": "^4.76.0",
+    "wrangler": "^4.78.0",
     "ws": "^8.19.0"
   }
 }
